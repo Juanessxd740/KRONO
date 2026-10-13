@@ -12,7 +12,7 @@
 > Lo marcado como **(propuesta)** es una sugerencia inicial que el equipo debe
 > confirmar en la sección 9 antes de implementarlo.
 
-**Versión:** 0.4 · **Última actualización:** 2026-10-06
+**Versión:** 0.7 · **Última actualización:** 2026-10-09
 
 ---
 
@@ -60,7 +60,7 @@ Categorías de tareas: **Estudio**, **Trabajo**, **Personal**.
 | Sistema de diseño | Lumina Glass System: siempre oscuro, tokens solo desde `core-ui` (`KronoTheme`, `KronoSpacing`, `KronoShapes`, `Modifier.glassSurface()`) |
 | Idioma | Todo el copy de la UI en español, en `strings.xml` del módulo |
 | Accesibilidad | Áreas táctiles mínimas de 48dp y `contentDescription` en íconos interactivos |
-| Datos | Local primero: la app funciona sin conexión y los datos viven en Room |
+| Datos | Cloud Firestore es la fuente de datos y usa su caché offline para funcionar sin conexión; la autenticación usa Firebase Authentication (D-1) |
 | Fechas | `kotlinx.datetime` en dominio; `kotlin.time.Duration` para duraciones |
 | Errores | Las capas de dominio y datos devuelven `KronoResult` (de `core-common`), sin excepciones cruzando módulos |
 | Calidad | Cada PR pasa `./gradlew lint testDebugUnitTest assembleDebug` (igual que el CI) |
@@ -74,7 +74,7 @@ Resumen; el detalle obligatorio está en `CLAUDE.md`.
 | `app` | `MainActivity`, `NavHost` y barra inferior. Único módulo que depende de todos los `feature-*` |
 | `core-common` | Utilidades sin Android (`KronoResult`) |
 | `core-domain` | Modelos y casos de uso en Kotlin puro |
-| `core-data` | Room, DAOs, repositorios |
+| `core-data` | Firebase (Authentication y Cloud Firestore), repositorios |
 | `core-ui` | Tema Lumina Glass y componentes compartidos |
 | `feature-auth` | Login, registro, recuperar contraseña |
 | `feature-onboarding` | Flujo inicial y bienvenida |
@@ -89,14 +89,16 @@ Hilt para inyección de dependencias.
 
 ## 6. Modelo de datos
 
-`Task` ya existe en `core-domain`. El resto es **(propuesta)** a validar en D-3.
+Modelo aprobado en D-3. `Task` ya existe en `core-domain`.
+
+Almacenamiento en Cloud Firestore bajo `users/{uid}`: las subtareas van embebidas en el documento de su tarea; las sesiones de tiempo y las demás entidades van en subcolecciones de `users/{uid}`. El diseño detallado de colecciones y documentos se define en F-02.
 
 | Entidad | Campos | Notas |
 |---|---|---|
 | `Task` (existente) | `id`, `title`, `dueDate: LocalDateTime?`, `estimatedDuration: Duration?`, `actualDuration: Duration`, `isCompleted` | Extender con `category`, `priority`, `note: String?` |
 | `TaskCategory` | `ESTUDIO`, `TRABAJO`, `PERSONAL` | Enum |
 | `TaskPriority` | `BAJA`, `MEDIA`, `ALTA` | Enum |
-| `Subtask` | `id`, `taskId`, `title`, `isDone`, `position` | Se eliminan junto con su tarea |
+| `Subtask` | `id`, `taskId`, `title`, `isDone`, `position` | Embebida en el documento de su tarea; se elimina junto con ella |
 | `TimeSession` | `id`, `taskId`, `startedAt`, `endedAt`, `duration`, `type` (`CRONOMETRO` / `ENFOQUE`) | Fuente de verdad de la duración real; `Task.actualDuration` es la suma de sus sesiones |
 | `FocusTemplate` | `id`, `name`, `focusMinutes`, `breakMinutes`, `isActive` | Plantillas de bloques de enfoque |
 | `CalendarEvent` | `id`, `title`, `start`, `end`, `location?`, `priority`, `source` (`LOCAL` / externo) | Base para conflictos |
@@ -154,25 +156,29 @@ módulo de librería declara dependencias de prueba.
 - **CA-3:** Dado cualquier módulo `core-*` o `feature-*`, cuando se agrega una prueba unitaria, entonces `./gradlew testDebugUnitTest` la ejecuta (dependencias declaradas desde `libs.versions.toml`, incluida `kotlinx-coroutines-test`).
 
 #### F-01 — Navegación base
-- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `app` · **Depende de:** F-00 · **PR:** —
+- **Estado:** Hecho · **Prioridad:** Alta · **Módulos:** `app` · **Depende de:** F-00 · **PR:** #16
 
 - **CA-1:** Dado que la app abre, cuando carga `MainActivity`, entonces muestra `KronoTheme` con un `NavHost` y la barra inferior Inicio, Tareas, Calendario y Ajustes.
 - **CA-2:** Dado cualquier destino de la barra, cuando el usuario lo toca, entonces navega a la pantalla correspondiente conservando el estado de la pestaña anterior.
 - **CA-3:** Dado el código de navegación, cuando se revisan las dependencias, entonces solo `app` conoce las rutas de varios `feature-*`; cada feature expone su grafo sin importar otros features.
 
+Las etiquetas de la barra inferior limitan su escala de fuente a 1,3x (D-11); el resto de la app escala al 200 % (PR #18).
+
 #### F-27 — Fuentes del sistema de diseño
-- **Estado:** Pendiente · **Prioridad:** Media · **Módulos:** `core-ui` · **Depende de:** F-00 · **PR:** —
+- **Estado:** Hecho · **Prioridad:** Media · **Módulos:** `core-ui` · **Depende de:** F-00 · **PR:** #17
 
 - **CA-1:** Dado `Type.kt`, cuando se renderiza texto, entonces usa Hanken Grotesk para texto y JetBrains Mono para datos y números (recursos en `res/font/`), sin `FontFamily.Default` como placeholder.
 
 ### Fase 1 — Núcleo: tareas y tiempo real
 
 #### F-02 — Persistencia de tareas
-- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `core-domain`, `core-data` · **Depende de:** F-00 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `core-domain`, `core-data` · **Depende de:** F-00, F-22 a F-25 (Auth hecha) · **PR:** —
 
-- **CA-1:** Dado el modelo de la sección 6, cuando se crea, edita o elimina una tarea con subtareas, entonces el cambio persiste en Room y sobrevive a reiniciar la app.
+La persistencia usa Cloud Firestore (D-1) con el modelo de la sección 6 (D-3): subtareas embebidas en la tarea y demás entidades en subcolecciones de `users/{uid}`. El diseño fino de colecciones y documentos se define en esta funcionalidad.
+
+- **CA-1:** Dado el modelo de la sección 6, cuando se crea, edita o elimina una tarea con subtareas, entonces el cambio persiste en Cloud Firestore y sobrevive a reiniciar la app, incluso sin conexión gracias a su caché offline.
 - **CA-2:** Dado el repositorio de tareas, cuando la UI observa la lista, entonces recibe actualizaciones como `Flow` sin consultas manuales.
-- **CA-3:** Dado un error de base de datos, cuando un caso de uso falla, entonces devuelve `KronoResult.Error` en lugar de lanzar la excepción.
+- **CA-3:** Dado un error de Firestore, cuando un caso de uso falla, entonces devuelve `KronoResult.Error` en lugar de lanzar la excepción.
 
 #### F-03 — Lista de tareas
 - **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
@@ -296,22 +302,23 @@ Algoritmo **(propuesta, confirmar en D-4)**: promedio de `actualDuration` de las
 #### F-21 — Zona de seguridad
 - **Estado:** Pendiente · **Prioridad:** Baja · **Módulos:** `feature-profile` · **Depende de:** F-02 · **PR:** —
 
-- **CA-1:** Dada la zona de seguridad, cuando se elige "Restablecer configuración y datos" y se confirma en un segundo paso, entonces se borran los datos locales y se restauran los valores por defecto.
-- **CA-2:** "Eliminar cuenta y perfil completo" queda **Bloqueada** hasta contar con el servicio de backend (D-1 se resolvió de forma temporal con autenticación local en Room).
+- **CA-1:** Dada la zona de seguridad, cuando se elige "Restablecer configuración y datos" y se confirma en un segundo paso, entonces se borran todos los datos del usuario en Cloud Firestore (tareas, sesiones, plantillas, avisos y demás), se restauran los valores por defecto y se conserva la cuenta.
+- **CA-2:** Dado "Eliminar cuenta y perfil completo", cuando se confirma en un segundo paso, entonces se borran los datos del usuario en Cloud Firestore, se pide reautenticación (Firebase la exige si el inicio de sesión no es reciente) y se elimina la cuenta de Firebase Authentication. Se implementa junto con `feature-profile`.
 
 ### Fase 3 — Cuenta, sincronización e IA avanzada
 
 #### F-22 a F-25 — Iniciar sesión, crear cuenta, recuperar contraseña, cerrar sesión
-- **Estado:** Hecho · **Prioridad:** Alta · **Módulos:** `feature-auth`, `core-domain`, `core-data`, `app` · **Depende de:** F-00 · **PR:** #7
+- **Estado:** Hecho · **Prioridad:** Alta · **Módulos:** `feature-auth`, `core-domain`, `core-data`, `app` · **Depende de:** F-00 · **PR:** #13
 
-Por ahora la autenticación es local con Room (D-1); `AuthRepository` en `core-domain` aísla la implementación para sustituirla por un backend en un hito futuro.
+La autenticación usa Firebase Authentication con correo y contraseña (D-1); `AuthRepository` en `core-domain` aísla la implementación. El PR #7 (hito 1) entregó una versión local con Room, que el PR #13 reemplazó por Firebase junto con la eliminación de Room y de sus cuentas de prueba.
 
-- **CA-1 (registro):** El formulario tiene los campos correo, contraseña y confirmación, sin campo de nombre (el nombre se pide en el onboarding, F-26). La contraseña exige mínimo 8 caracteres, al menos un número y un carácter especial, con indicadores que se marcan en vivo; si la confirmación no coincide se muestra "Las contraseñas no coinciden". La contraseña se guarda solo como hash con sal.
+- **CA-1 (registro):** El formulario tiene los campos correo, contraseña y confirmación, sin campo de nombre (el nombre se pide en el onboarding, F-26). La contraseña exige mínimo 8 caracteres, al menos un número y un carácter especial, con indicadores que se marcan en vivo; si la confirmación no coincide se muestra "Las contraseñas no coinciden". La contraseña la gestiona Firebase (la app no la almacena ni le aplica hash propio).
 - **CA-2 (login):** Con campos vacíos se muestra "Por favor, completa todos los campos obligatorios"; durante el envío el botón muestra progreso y no permite doble envío.
-- **CA-3 (recuperar):** Mientras no haya backend, el envío es simulado. Con un correo no registrado se muestra "Este correo no está registrado en KRONO"; con uno registrado, la pantalla de éxito, sin enviar un correo real.
-- **CA-4 (cerrar sesión):** Por ahora solo existe el caso de uso `LogoutUseCase`; el diálogo de confirmación ("Permanecer en KRONO" y "Cerrar Sesión") vive luego en `feature-profile`. Mientras no exista `feature-profile`, la pantalla provisional de `app` tiene un botón temporal "Cerrar sesión" sin confirmación: invoca `LogoutUseCase` y vuelve al login limpiando el back stack; se elimina cuando existan F-01/F-19.
-- **CA-5 (pantalla provisional):** Dado un inicio de sesión exitoso, cuando termina, entonces la app lleva por ahora a una pantalla provisional en `app` con el texto "Este módulo se desarrollará en el siguiente hito" (estilo Lumina Glass), que F-01 reemplazará.
-- **CA-6 (sesión persistente):** Dada una sesión activa, cuando se reabre la app, entonces se entra directamente sin pasar por el login.
+- **CA-3 (recuperar):** El envío es real por correo mediante Firebase (`sendPasswordResetEmail`) y se muestra la pantalla de éxito. La pantalla de éxito conserva el título "¡Enlace Enviado!" del diseño y muestra el texto neutro "Si el correo está registrado, te enviamos un enlace", para no exponer qué correos tienen cuenta (D-10; sigue activa la protección contra enumeración de correos de Firebase). La pantalla de error se usa para un correo con formato inválido o sin conexión, no para "correo no registrado".
+- **CA-4 (cerrar sesión):** El caso de uso `LogoutUseCase` cierra la sesión de Firebase. Hasta que `feature-profile` (F-19/F-20) lo reemplace, la pestaña Ajustes provisional de `app` tiene un botón temporal "Cerrar sesión" que pide confirmación con un diálogo ("¿Cerrar sesión?", con las opciones Cancelar y Cerrar sesión); al confirmar invoca `LogoutUseCase` y vuelve al login limpiando el back stack, y si falla muestra un mensaje de error. El diálogo definitivo ("Permanecer en KRONO" y "Cerrar Sesión") vivirá en `feature-profile`. Decisión del 2026-10-08, implementada en el PR #16.
+- **CA-5 (entrada al flujo principal):** Ya no existe la pantalla provisional "Próximo hito". Tras autenticarse (o al abrir la app con sesión activa) se entra al flujo principal con la barra inferior de F-01; "atrás" no vuelve al login. Decisión del 2026-10-08, implementada en el PR #16.
+- **CA-6 (sesión persistente):** Dada una sesión activa de Firebase, cuando se reabre la app, entonces se entra directamente sin pasar por el login.
+- **CA-7 (errores):** Dadas credenciales inválidas, un correo ya en uso o la falta de conexión, cuando se intenta iniciar sesión o crear la cuenta, entonces se muestra un mensaje en español sin que la app falle. Los errores cruzan los módulos como `KronoResult.Error`.
 
 #### F-26 — Onboarding: completar perfil
 - **Estado:** Pendiente · **Prioridad:** Media · **Módulos:** `feature-onboarding` · **Depende de:** F-23 (autenticación, D-1 resuelta) · **PR:** —
@@ -332,25 +339,28 @@ reportan al orquestador.
 
 | # | Pregunta | Afecta a | Decisión |
 |---|---|---|---|
-| D-1 | ¿Qué backend de autenticación y nube se usa (Firebase, propio, ninguno)? Hoy el proyecto no tiene librerías de red | F-21 (CA-2), F-22 a F-26, sincronización | Por ahora, autenticación y datos locales con Room (sin Firebase ni red). En un hito futuro se reemplaza por un servicio de backend con persistencia; `AuthRepository` en `core-domain` permite cambiar la implementación sin tocar los casos de uso ni la UI. Las contraseñas se guardan solo como hash con sal. |
+| D-1 | ¿Qué backend de autenticación y nube se usa (Firebase, propio, ninguno)? | F-21 (CA-2), F-22 a F-26, sincronización | Resuelta (Juan Fernando Sánchez Otero, 2026-10-08): el backend es Firebase. Autenticación con Firebase Authentication (correo y contraseña) y Cloud Firestore como única fuente de datos, con su persistencia offline; Room se elimina. Las cuentas locales de prueba se descartan. `AuthRepository` y los repositorios de `core-domain` aíslan la implementación. Orden de trabajo: primero Auth (F-22 a F-25), luego Firestore (datos de tareas), cada uno en su PR. Queda sin efecto el hash con sal y la recuperación simulada: la contraseña la gestiona Firebase y la recuperación es real por correo. |
 | D-2 | ¿Qué proveedores de login social ("o continúa con")? | F-22 | Ninguno: sin login social por ahora. |
-| D-3 | ¿Se aprueba el modelo de datos propuesto de la sección 6? | F-02 en adelante | Pendiente |
+| D-3 | ¿Se aprueba el modelo de datos propuesto de la sección 6? | F-02 en adelante | Resuelta (Juan Fernando Sánchez Otero, 2026-10-08): se aprueba el modelo de la sección 6, almacenado en Cloud Firestore bajo `users/{uid}`: subtareas embebidas en el documento de la tarea; sesiones de tiempo y demás entidades en subcolecciones de `users/{uid}`. El diseño fino queda para F-02. |
 | D-4 | ¿Se aprueba el algoritmo de estimación propuesto en F-11? | F-11 | Pendiente |
 | D-5 | ¿El asistente de prioridades es una heurística local o usa un servicio de IA externo? Los diseños mencionan "ritmo circadiano" y "confianza 94%": definir qué datos los respaldan | F-12 | Pendiente |
 | D-6 | ¿Entra la sincronización con Google Calendar y Outlook en el alcance del proyecto académico? | F-18 | Pendiente |
 | D-7 | `CONTRIBUTING.md` define la rama `develop`, pero solo existe `main` en el remoto. ¿Se crea `develop` como base de los PRs? | Flujo de PRs | Resuelta: `develop` existe y es la base de los PRs. |
-| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Parcial: Juan Fernando Sánchez Otero en `app`, `core-*` y `feature-auth`; demás módulos sin asignar |
+| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Parcial (Juan Fernando Sánchez Otero, 2026-10-08): Juan Fernando Sánchez Otero en `app`, `core-*`, `feature-auth` y `feature-tasks`; `feature-onboarding`, `feature-dashboard`, `feature-calendar` y `feature-profile` siguen sin asignar |
 | D-9 | Ajustes muestra "Tema de pantalla: Cyber Dark", pero no hay tema claro. ¿Se omite la opción o queda informativa? | F-20 | Pendiente |
+| D-10 | Firebase puede devolver éxito al recuperar la contraseña aunque el correo no exista (protección contra enumeración de correos, activa por defecto en proyectos nuevos). ¿Se desactiva esa protección en la consola de Firebase para conservar el mensaje del diseño "Este correo no está registrado en KRONO", o se cambia el copy a un mensaje neutro ("Si el correo está registrado, te enviamos un enlace")? | F-24 (CA-3) | Resuelta (Juan Fernando Sánchez Otero, 2026-10-08): se conserva el diseño visual de las tres pantallas, con texto neutro para no exponer qué correos tienen cuenta (la protección de Firebase sigue activa). Envío real con `sendPasswordResetEmail`; éxito: "Si el correo está registrado, te enviamos un enlace" (título "¡Enlace Enviado!"); error solo para correo inválido o sin conexión. |
+| D-11 | ¿Las etiquetas de la barra inferior escalan con la fuente del sistema hasta el 200 %? | F-01 | Resuelta (Juan Fernando Sánchez Otero, 2026-10-09): las etiquetas limitan su escala de fuente a 1,3x (`ESCALA_MAXIMA_ETIQUETA`), excepción consciente a WCAG 1.4.4 para que la barra no se desborde; el ícono y la descripción de accesibilidad "Ir a <sección>" se mantienen. El resto de la app escala al 200 % (PR #18). |
+| D-12 | ¿Se implementa el desenfoque real del fondo (backdrop blur) del efecto glass? `Modifier.blur` y `RenderEffect` no desenfocan lo que hay detrás de la superficie; requeriría una librería como Haze. Hoy `glassSurface()` no desenfoca (documentado en `Glass.kt`, PR #18) | Sistema de diseño (`core-ui`) | Pendiente |
+| D-13 | ¿Cómo escalan los íconos pequeños con la fuente del sistema? `iconSmall` es fijo en dp y no crece al 200 % | Sistema de diseño (`core-ui`) | Pendiente |
 
 ### Responsables por módulo (D-8, parcial)
 
 | Módulo | Responsable |
 |---|---|
 | `app`, `core-*` | Juan Fernando Sánchez Otero |
-| `feature-auth` | Juan Fernando Sánchez Otero |
+| `feature-auth`, `feature-tasks` | Juan Fernando Sánchez Otero |
 | `feature-onboarding` | Sin asignar |
 | `feature-dashboard` | Sin asignar |
-| `feature-tasks` | Sin asignar |
 | `feature-calendar` | Sin asignar |
 | `feature-profile` | Sin asignar |
 
@@ -363,3 +373,21 @@ reportan al orquestador.
 | 2026-10-05 | v0.3: decisiones de Juan Fernando Sánchez Otero: F-00 con PR #5; D-1 (autenticación y datos locales con Room, hash con sal), D-2 (sin login social) y D-8 (responsable de `app`, `core-*` y `feature-auth`; demás módulos sin asignar); F-22 a F-26 pasan a Pendiente con criterios ajustados (registro sin nombre, recuperación simulada, pantalla provisional, sesión persistente, `LogoutUseCase`); aclaración: el proyecto usa AGP 8.7.0 con Gradle 9.6.0 (compila, con aviso de incompatibilidad futura con Gradle 10; subir AGP queda como tarea aparte), por lo que la nota de v0.2 sobre AGP 9.4.1 no aplica |
 | 2026-10-06 | F-22 a F-25: CA-4 aclarado con un botón temporal "Cerrar sesión" (sin confirmación) en la pantalla provisional de `app` mientras no exista `feature-profile`; decisión de Juan Fernando Sánchez Otero |
 | 2026-10-06 | v0.4: cierre del hito 1: F-22 a F-25 marcadas como Hechas (PR #7): autenticación local en Room, botón temporal "Cerrar sesión" en la pantalla provisional de `app`, ícono adaptativo y logo de KRONO |
+| 2026-10-08 | v0.5: D-1 pasa a Firebase: Authentication (correo y contraseña) y Cloud Firestore como única fuente de datos, Room se elimina; F-02 se reformula sobre Firestore y depende de D-3; se descartan el hash con sal, la recuperación simulada y las cuentas locales de prueba; F-22 a F-25 vuelven a En progreso (migración, PR —) con CA-1, CA-3 y CA-6 ajustados y CA-7 (errores) nuevo; nueva decisión abierta D-10 (mensaje de correo no registrado); F-21 CA-2 sigue Bloqueada con razón actualizada; decisión de Juan Fernando Sánchez Otero |
+| 2026-10-08 | v0.6: D-3 resuelta (modelo de datos aprobado en Firestore bajo `users/{uid}`, subtareas embebidas, demás entidades en subcolecciones; F-02 ya no depende de D-3); D-10 resuelta (texto neutro en recuperar contraseña, F-24 CA-3); F-21 CA-1 borra los datos del usuario en Firestore y CA-2 deja de estar Bloqueada (borrado de datos, reautenticación y eliminación de la cuenta); se quita de D-1 la frase obsoleta sobre librerías de red; decisión de Juan Fernando Sánchez Otero |
+| 2026-10-09 | v0.7: cierre de la fase 0 (decisiones de Juan Fernando Sánchez Otero). Estados: F-22 a F-25 Hechas (PR #13, Firebase Authentication), F-01 Hecha (PR #16), F-27 Hecha (PR #17). F-22 a F-25: CA-4 (botón temporal "Cerrar sesión" en Ajustes provisional con diálogo de confirmación) y CA-5 (se elimina la pantalla "Próximo hito"; se entra al flujo principal con barra inferior) ajustados a lo implementado en el PR #16 (decisión del 2026-10-08). D-8: `feature-tasks` asignado a Juan Fernando Sánchez Otero; sigue Parcial para onboarding, dashboard, calendar y profile. D-11 resuelta (etiquetas de la barra inferior limitadas a 1,3x, PR #18). Nuevas decisiones abiertas D-12 (backdrop blur real) y D-13 (escala de íconos pequeños). Nueva sección 11 "Deuda técnica conocida". Se corrige la referencia obsoleta a Room en la nota de F-22 a F-25 |
+
+## 11. Deuda técnica conocida
+
+Pendientes detectados al cerrar la fase 0 que no son funcionalidades (`F-XX`) ni
+decisiones abiertas.
+
+**Pruebas y CI**
+- Las pruebas instrumentadas (`androidTest`) no corren en el CI; solo se ejecutan en local con emulador.
+- `./gradlew connectedDebugAndroidTest` global falla en módulos sin pruebas instrumentadas; se ejecuta por módulo.
+
+**Autenticación (F-22 a F-25)**
+- Falta un mensaje propio para `ERROR_USER_DISABLED` (cuenta deshabilitada).
+- Firebase puede rechazar una contraseña aunque los indicadores de fortaleza estén en verde.
+- La sesión en caché persiste si la cuenta se borra desde la consola de Firebase.
+- Firebase BoM queda en 34.12.0, limitado por Kotlin 2.1.0.

@@ -11,11 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -34,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.krono.core.ui.icons.KronoIcons
 import com.krono.core.ui.theme.ErrorColor
 import com.krono.core.ui.theme.KronoSizes
 import com.krono.core.ui.theme.KronoSpacing
@@ -53,6 +50,7 @@ import com.krono.feature.auth.ui.FormErrorMessage
 import com.krono.feature.auth.ui.GlassBadge
 import com.krono.feature.auth.ui.stringRes
 
+/** Punto de entrada con estado: conecta [RegisterViewModel] con la pantalla. [onBack] regresa al login y [onRegistered] continúa tras crear la cuenta. */
 @Composable
 internal fun RegisterRoute(
     onBack: () -> Unit,
@@ -132,10 +130,7 @@ private fun RegisterFormContent(
     val emailMessage = state.error?.takeIf {
         it == AuthMessage.InvalidEmail || it == AuthMessage.EmailAlreadyRegistered
     }
-    // Errores que no pertenecen a un campo concreto se muestran sobre el botón.
-    val generalMessage = state.error?.takeIf {
-        it == AuthMessage.EmptyFields || it == AuthMessage.WeakPassword || it == AuthMessage.Unexpected
-    }
+    val generalMessage = state.error?.takeIf { it in GENERAL_REGISTER_MESSAGES }
     // Ocultar el teclado sin quitar el foco: con clearFocus(), un ENTER de teclado físico
     // movía el foco a "Volver" y su key-up regresaba al login.
     val keyboard = LocalSoftwareKeyboardController.current
@@ -249,15 +244,15 @@ private fun RequirementRow(label: Int, isMet: Boolean, submitAttempted: Boolean)
         else -> OnSurfaceVariant
     }
     val icon = when {
-        isMet -> Icons.Outlined.CheckCircle
-        submitAttempted -> Icons.Outlined.Cancel
-        else -> Icons.Outlined.RadioButtonUnchecked
+        isMet -> KronoIcons.CheckCircle
+        submitAttempted -> KronoIcons.Cancel
+        else -> KronoIcons.RadioButtonUnchecked
     }
     Row(
         modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(KronoSizes.iconSmall))
+        Icon(painter = painterResource(icon), contentDescription = null, tint = color, modifier = Modifier.size(KronoSizes.iconSmall))
         Spacer(Modifier.width(KronoSpacing.sm))
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = color)
     }
@@ -283,7 +278,7 @@ private fun RegisterSuccessContent(onContinue: () -> Unit, modifier: Modifier = 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             GlassBadge(content = {
                 Icon(
-                    imageVector = Icons.Outlined.TaskAlt,
+                    painter = painterResource(KronoIcons.TaskAlt),
                     contentDescription = null,
                     tint = PrimaryFixedDim,
                     modifier = Modifier.size(KronoSizes.iconLarge),
@@ -294,6 +289,15 @@ private fun RegisterSuccessContent(onContinue: () -> Unit, modifier: Modifier = 
         AuthPrimaryButton(text = stringResource(R.string.auth_register_success_continue), onClick = onContinue)
     }
 }
+
+/** Errores sin campo propio: se muestran sobre el botón de crear cuenta. */
+private val GENERAL_REGISTER_MESSAGES = setOf(
+    AuthMessage.EmptyFields,
+    AuthMessage.WeakPassword,
+    AuthMessage.NoConnection,
+    AuthMessage.TooManyRequests,
+    AuthMessage.Unexpected,
+)
 
 @Preview
 @Composable

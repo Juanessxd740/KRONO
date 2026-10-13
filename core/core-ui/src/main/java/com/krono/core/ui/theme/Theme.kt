@@ -1,14 +1,10 @@
 package com.krono.core.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-/**
- * KRONO no tiene tema claro — isSystemInDarkTheme() se ignora intencionalmente,
- * siempre se aplica el darkColorScheme del Lumina Glass System.
- */
+/** Esquema de color oscuro del Lumina Glass System, construido solo con los tokens de `Color.kt`. */
 private val KronoDarkColorScheme = darkColorScheme(
     primary = PrimaryMagenta,
     onPrimary = OnPrimary,
@@ -35,6 +31,12 @@ private val KronoDarkColorScheme = darkColorScheme(
     onError = OnError,
 )
 
+/**
+ * Aplica el tema Lumina Glass System a [content].
+ *
+ * KRONO no tiene tema claro: la preferencia del sistema (`isSystemInDarkTheme()`) se ignora
+ * intencionalmente y siempre se aplica el esquema oscuro y la paleta fija, sin color dinámico.
+ */
 @Composable
 fun KronoTheme(content: @Composable () -> Unit) {
     MaterialTheme(

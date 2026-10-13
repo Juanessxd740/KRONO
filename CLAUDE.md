@@ -36,7 +36,7 @@ Reglas duras:
 - Los módulos feature **nunca** se importan entre sí directamente — solo `app` puede depender de todos. Comunicación entre features vía `core-domain` o navegación.
 - Sin colores/espaciados hardcodeados — todo desde `core-ui`.
 - Inyección de dependencias con Hilt (ya configurado en `app` y en cada `feature-*`).
-- Persistencia con Room (dependencia ya declarada en `core-data`).
+- Persistencia con Cloud Firestore (fuente única de datos, con su caché offline) y autenticación con Firebase Authentication, ambas en `core-data`; Room se elimina (D-1).
 
 ## Diseño de referencia
 
@@ -55,6 +55,28 @@ Scaffold recién generado: estructura de módulos, Gradle (version catalog centr
 - Antes de un PR, revisar el checklist en `.github/PULL_REQUEST_TEMPLATE.md` (fronteras de módulo, no hardcodear estilos, ViewModels sin Compose).
 - Usar Conventional Commits (ver `CONTRIBUTING.md`).
 - Métricas de éxito del producto (para tener en mente al priorizar features): reducción de la brecha entre tiempo estimado y real, y reducción de la tasa de entregas extemporáneas.
+
+## Calidad y documentación del código
+
+Estándar obligatorio para todo código Kotlin del repo:
+
+- **KDoc en español** para toda clase, interfaz, objeto, caso de uso y
+  función o propiedad pública. Usa `@param`, `@return` y `@throws` solo cuando
+  aporten información que el nombre y la firma no dan.
+- **Comentarios inline solo para explicar el "por qué"** (una decisión, una
+  restricción, un caso borde), nunca el "qué" hace la línea.
+- **Funciones cortas con una sola responsabilidad.** Si necesitas "y" para
+  describirla, divídela.
+- **Nombres descriptivos** para clases, funciones, variables y pruebas.
+- **Sin código muerto ni comentado.** Lo que no se usa se borra (git conserva
+  el historial).
+- **Sin números mágicos:** todo literal con significado va en una constante
+  con nombre (los espaciados y tamaños siguen saliendo de `core-ui`).
+- **Clases y archivos con un propósito claro:** un archivo no mezcla
+  responsabilidades ajenas entre sí.
+- **Alcance en los PR:** el código que se toque en un PR debe quedar
+  documentado según este estándar. No se hacen refactors masivos de lo que el
+  PR no toca.
 
 ## Uso de la skill mobile-android-design
 

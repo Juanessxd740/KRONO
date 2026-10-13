@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,12 +16,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.krono.core.ui.icons.KronoIcons
 import com.krono.core.ui.theme.KronoSizes
 import com.krono.core.ui.theme.KronoSpacing
 import com.krono.core.ui.theme.KronoTheme
@@ -41,6 +41,7 @@ import com.krono.feature.auth.ui.AuthTextLink
 import com.krono.feature.auth.ui.GlassBadge
 import com.krono.feature.auth.ui.stringRes
 
+/** Punto de entrada con estado: conecta [ForgotPasswordViewModel] con la pantalla. [onBack] regresa al login. */
 @Composable
 internal fun ForgotPasswordRoute(
     onBack: () -> Unit,
@@ -57,7 +58,9 @@ internal fun ForgotPasswordRoute(
 }
 
 /**
- * Recuperar contraseña (F-24), simulado mientras no haya backend. Referencia:
+ * Recuperar contraseña (F-24): envía el enlace real por correo. El error solo
+ * aparece con un correo mal formado o sin conexión; un correo sin cuenta muestra
+ * el mismo éxito neutro (D-10). Referencia:
  * `/design/recuperar_contrase_a_estilo_lumina_glass_1`, `..._error_correo_no_encontrado`
  * y `recuperar_contrase_a_xito_lumina_style_1`.
  */
@@ -124,7 +127,7 @@ private fun ForgotPasswordSuccessContent(onBack: () -> Unit, modifier: Modifier 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             GlassBadge(content = {
                 Icon(
-                    imageVector = Icons.Outlined.MarkEmailRead,
+                    painter = painterResource(KronoIcons.MarkEmailRead),
                     contentDescription = null,
                     tint = PrimaryFixedDim,
                     modifier = Modifier.size(KronoSizes.iconLarge),
@@ -154,14 +157,6 @@ private fun ForgotPasswordSuccessContent(onBack: () -> Unit, modifier: Modifier 
                 .glassSurface()
                 .padding(KronoSpacing.lg),
         ) {
-            Text(
-                text = stringResource(R.string.auth_forgot_success_simulated),
-                style = MaterialTheme.typography.bodySmall,
-                color = OnSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(KronoSpacing.md))
             AuthPrimaryButton(
                 text = stringResource(R.string.auth_forgot_back_to_login),
                 onClick = onBack,
@@ -176,7 +171,7 @@ private fun ForgotPasswordSuccessContent(onBack: () -> Unit, modifier: Modifier 
 private fun ForgotPasswordErrorPreview() {
     KronoTheme {
         ForgotPasswordScreen(
-            state = ForgotPasswordUiState(email = "ejemplo@correo.com", error = AuthMessage.EmailNotRegistered),
+            state = ForgotPasswordUiState(email = "ejemplo@correo.com", error = AuthMessage.NoConnection),
             onEmailChange = {},
             onSubmit = {},
             onBack = {},
