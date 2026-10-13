@@ -24,6 +24,8 @@ import com.krono.app.R
 import com.krono.core.ui.theme.DeepMidnight
 import com.krono.feature.auth.navigation.AUTH_GRAPH_ROUTE
 import com.krono.feature.auth.navigation.authGraph
+import com.krono.feature.tasks.navigation.createTaskScreen
+import com.krono.feature.tasks.navigation.navigateToCreateTask
 import com.krono.feature.tasks.ui.TasksRoute
 
 /**
@@ -44,7 +46,7 @@ fun KronoApp(viewModel: KronoAppViewModel = hiltViewModel()) {
         destinoInicial = if (inicio == StartDestination.Home) RUTA_GRAFO_PRINCIPAL else AUTH_GRAPH_ROUTE,
         grafoAuth = { alAutenticarse -> authGraph(navController, alAutenticarse) },
         ajustes = { alCerrarSesion -> AjustesRoute(alCerrarSesion) },
-        tareas = { TasksRoute(onAddTask = { /* F-04: crear tarea */ }) },
+        tareas = { TasksRoute(onAddTask = { navController.navigateToCreateTask() }) },
     )
 }
 
@@ -92,6 +94,7 @@ fun KronoShell(
             grafoPrincipal(
                 ajustes = { ajustes { navController.volverAAutenticacion() } },
                 tareas = tareas,
+                alVolverDeCrearTarea = { navController.popBackStack() },
             )
         }
     }
@@ -101,12 +104,14 @@ fun KronoShell(
 private fun NavGraphBuilder.grafoPrincipal(
     ajustes: @Composable () -> Unit,
     tareas: @Composable () -> Unit,
+    alVolverDeCrearTarea: () -> Unit = {},
 ) {
     navigation(startDestination = KronoDestination.Inicial.route, route = RUTA_GRAFO_PRINCIPAL) {
         // Cada pantalla provisional se reemplaza por el grafo que exponga su feature
         // (dashboard, tasks, calendar, profile) cuando se implemente.
         composable(KronoDestination.Inicio.route) { SeccionProvisional(R.string.seccion_inicio) }
         composable(KronoDestination.Tareas.route) { tareas() }
+        createTaskScreen(onBack = alVolverDeCrearTarea)
         composable(KronoDestination.Calendario.route) { SeccionProvisional(R.string.seccion_calendario) }
         composable(KronoDestination.Ajustes.route) { ajustes() }
     }
