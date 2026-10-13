@@ -1,0 +1,54 @@
+<resources>
+    <!-- Cabecera de la pantalla de tareas -->
+    <string name="tasks_title">Tus Tareas</string>
+    <string name="tasks_subtitle">Organiza tu tiempo con calma</string>
+
+    <!-- Filtros por categoría (CA-2) -->
+    <string name="filter_all">Todas</string>
+    <string name="filter_study">Estudio</string>
+    <string name="filter_work">Trabajo</string>
+    <string name="filter_personal">Personal</string>
+
+    <!-- Enfoque Diario (CA-3) -->
+    <string name="daily_focus_title">Enfoque Diario</string>
+    <string name="daily_focus_subtitle">%d pendientes críticos para hoy</string>
+    <string name="daily_focus_single_pending">1 pendiente crítico para hoy</string>
+    <string name="daily_focus_all_done">Todas las tareas de hoy completadas</string>
+    <string name="daily_focus_no_tasks">Sin tareas programadas para hoy</string>
+    <string name="percentage_format">%d%%</string>
+
+    <!-- Secciones temporales (CA-1) -->
+    <string name="section_today">Para Hoy</string>
+    <string name="section_this_week">Esta Semana</string>
+    <string name="tasks_count_multiple">%d tareas</string>
+    <string name="tasks_count_single">1 tarea</string>
+
+    <!-- Tarjetas de tareas (CA-1) -->
+    <string name="priority_high">Alta</string>
+    <string name="priority_medium">Media</string>
+    <string name="priority_low">Baja</string>
+    <string name="due_today_format">Hoy, %s hrs</string>
+    <string name="due_time_format">%s, %s hrs</string>
+    <string name="no_due_date">Sin fecha límite</string>
+    <string name="estimated_duration_format">~%s est.</string>
+    <string name="duration_minutes">%d min</string>
+    <string name="duration_hours">%d h</string>
+    <string name="duration_hours_minutes">%d h %d m</string>
+
+    <!-- Acciones y accesibilidad -->
+    <string name="action_delete_task">Eliminar tarea</string>
+    <string name="action_mark_completed">Marcar como completada</string>
+    <string name="action_mark_incomplete">Marcar como pendiente</string>
+    <string name="action_add_task">Añadir Nueva Tarea</string>
+    <string name="cd_task_checkbox">Estado de la tarea: %s</string>
+    <string name="cd_priority">Prioridad %s</string>
+    <string name="cd_category">Categoría %s</string>
+    <string name="cd_delete_task">Eliminar tarea %s</string>
+    <string name="cd_focus_progress">Progreso de enfoque diario: %d por ciento</string>
+
+    <!-- Estado vacío (CA-4) -->
+    <string name="empty_tasks_title">Sin tareas pendientes</string>
+    <string name="empty_tasks_subtitle">Organiza tu día añadiendo una nueva tarea académica, laboral o personal.</string>
+    <string name="empty_filter_title">No hay tareas en esta categoría</string>
+    <string name="empty_filter_subtitle">Prueba seleccionando otra categoría o añade una nueva tarea.</string>
+</resources>
