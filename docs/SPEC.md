@@ -1,58 +1,3 @@
-# KRONO — Especificación del producto
-
-> Fuente de verdad funcional para el equipo y los agentes de desarrollo.
-> Cada funcionalidad tiene un ID (`F-XX`) y criterios de aceptación (`CA-X`)
-> verificables. El desarrollador implementa contra estos criterios y QA aprueba
-> o rechaza contra ellos.
->
-> Las reglas de arquitectura y del sistema de diseño viven en `CLAUDE.md` y
-> prevalecen sobre cualquier cosa de este documento. Las referencias visuales
-> viven en `/design/` (una carpeta por pantalla con `code.html` + `screen.png`).
->
-> Lo marcado como **(propuesta)** es una sugerencia inicial que el equipo debe
-> confirmar en la sección 9 antes de implementarlo.
-
-**Versión:** 0.7 · **Última actualización:** 2026-10-09
-
----
-
-## 1. Visión
-
-KRONO es una app Android de gestión de tiempo para **estudiantes universitarios
-que también trabajan**. En lugar de pedir estimaciones manuales, mide con un
-**cronómetro** la duración real de cada tarea, aprende de ese historial y genera
-estimaciones personalizadas y sugerencias de priorización.
-
-**Métricas de éxito:**
-- Reducir la brecha entre tiempo estimado y tiempo real de las tareas.
-- Reducir la tasa de entregas extemporáneas.
-
-## 2. Usuarios
-
-| Usuario | Qué necesita lograr |
-|---|---|
-| Estudiante que trabaja | Saber cuánto le toman realmente sus tareas, cumplir entregas y equilibrar estudio, trabajo y vida personal |
-
-Categorías de tareas: **Estudio**, **Trabajo**, **Personal**.
-
-## 3. Alcance
-
-**Incluido (por fases, ver sección 8):**
-- Gestión de tareas con subtareas, prioridad, categoría y fecha límite
-- Cronómetro que registra la duración real y modo enfoque por bloques
-- Estimación basada en historial y asistente de prioridades
-- Dashboard diario, notificaciones y recordatorios
-- Calendario día/semana/mes con detección de conflictos
-- Perfil, ajustes y zona de seguridad
-- Autenticación y onboarding
-
-**Fuera de alcance por ahora:**
-- Tema claro o colores dinámicos (Material You)
-- Versión web, iOS o tablet optimizada
-- Funciones sociales o colaborativas entre usuarios
-
-## 4. Requisitos no funcionales
-
 | Área | Requisito |
 |---|---|
 | Plataforma | Android, minSdk 26, compileSdk/targetSdk 35, JDK 17 |
@@ -391,3 +336,59 @@ decisiones abiertas.
 - Firebase puede rechazar una contraseña aunque los indicadores de fortaleza estén en verde.
 - La sesión en caché persiste si la cuenta se borra desde la consola de Firebase.
 - Firebase BoM queda en 34.12.0, limitado por Kotlin 2.1.0.
+
+> Fuente de verdad funcional para el equipo y los agentes de desarrollo.
+> Cada funcionalidad tiene un ID (`F-XX`) y criterios de aceptación (`CA-X`)
+> verificables. El desarrollador implementa contra estos criterios y QA aprueba
+> o rechaza contra ellos.
+>
+> Las reglas de arquitectura y del sistema de diseño viven en `CLAUDE.md` y
+> prevalecen sobre cualquier cosa de este documento. Las referencias visuales
+> viven en `/design/` (una carpeta por pantalla con `code.html` + `screen.png`).
+>
+> Lo marcado como **(propuesta)** es una sugerencia inicial que el equipo debe
+> confirmar en la sección 9 antes de implementarlo.
+
+**Versión:** 0.7 · **Última actualización:** 2026-10-09
+# KRONO — Especificación del producto
+
+---
+
+## 1. Visión
+
+KRONO es una app Android de gestión de tiempo para **estudiantes universitarios
+que también trabajan**. En lugar de pedir estimaciones manuales, mide con un
+**cronómetro** la duración real de cada tarea, aprende de ese historial y genera
+estimaciones personalizadas y sugerencias de priorización.
+
+**Métricas de éxito:**
+- Reducir la brecha entre tiempo estimado y tiempo real de las tareas.
+- Reducir la tasa de entregas extemporáneas.
+
+## 2. Usuarios
+
+| Usuario | Qué necesita lograr |
+|---|---|
+| Estudiante que trabaja | Saber cuánto le toman realmente sus tareas, cumplir entregas y equilibrar estudio, trabajo y vida personal |
+
+Categorías de tareas: **Estudio**, **Trabajo**, **Personal**.
+
+## 3. Alcance
+
+**Incluido (por fases, ver sección 8):**
+- Gestión de tareas con subtareas, prioridad, categoría y fecha límite
+- Cronómetro que registra la duración real y modo enfoque por bloques
+- Estimación basada en historial y asistente de prioridades
+- Dashboard diario, notificaciones y recordatorios
+- Calendario día/semana/mes con detección de conflictos
+
+- Perfil, ajustes y zona de seguridad
+- Autenticación y onboarding
+
+**Fuera de alcance por ahora:**
+- Tema claro o colores dinámicos (Material You)
+- Versión web, iOS o tablet optimizada
+- Funciones sociales o colaborativas entre usuarios
+
+## 4. Requisitos no funcionales
+
