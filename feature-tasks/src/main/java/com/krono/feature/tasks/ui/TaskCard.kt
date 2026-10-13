@@ -29,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.krono.core.domain.task.Task
 import com.krono.core.domain.task.TaskCategory
 import com.krono.core.domain.task.TaskPriority
@@ -74,7 +73,7 @@ fun TaskCard(
     Column(
         modifier = cardModifier
             .fillMaxWidth()
-            .glassSurface(cornerRadius = CARD_CORNER_RADIUS, borderColor = borderColor)
+            .glassSurface(borderColor = borderColor)
             .padding(KronoSpacing.md),
     ) {
         // Fila superior: Categoría y Prioridad
@@ -283,7 +282,6 @@ private fun TaskCheckbox(
     }
 }
 
-private val CARD_CORNER_RADIUS = 18.dp
 private const val HIGH_PRIORITY_BORDER_ALPHA = 0.5f
 private const val SECONDARY_BORDER_ALPHA = 0.4f
 private const val BADGE_ALPHA = 0.12f

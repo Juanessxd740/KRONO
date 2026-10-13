@@ -22,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.krono.core.ui.theme.KronoSizes
 import com.krono.core.ui.theme.KronoSpacing
 import com.krono.core.ui.theme.OnSurface
@@ -47,7 +46,7 @@ fun DailyFocusCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .glassSurface(cornerRadius = CARD_CORNER_RADIUS)
+            .glassSurface()
             .padding(KronoSpacing.md)
             .semantics { contentDescription = cdProgress },
         verticalAlignment = Alignment.CenterVertically,
@@ -126,6 +125,5 @@ fun DailyFocusCard(
     }
 }
 
-private val CARD_CORNER_RADIUS = 18.dp
 private const val BADGE_BG_ALPHA = 0.15f
 private const val BADGE_BORDER_ALPHA = 0.35f
