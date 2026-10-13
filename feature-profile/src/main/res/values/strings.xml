@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cabecera general -->
+    <string name="profile_settings_title">Ajustes</string>
+    <string name="profile_settings_core_badge" translatable="false">CORE v2.4</string>
+    <string name="profile_back_home">Volver al Inicio</string>
+    <string name="profile_cd_back">Volver a la pantalla anterior</string>
+
+    <!-- Tarjeta de Identidad de Usuario (F-19) -->
+    <string name="profile_default_name">Alexa Gómez</string>
+    <string name="profile_default_role">Estudiante y Trabajadora</string>
+    <string name="profile_edit_info">Editar Información Personal</string>
+    <string name="profile_edit_info_desc">Nombre, rol académico y contactos</string>
+    <string name="profile_ai_sync_label">Sincronización KRONO AI</string>
+    <string name="profile_ai_sync_active">Activa</string>
+    <string name="profile_ai_sync_completed">100% al día</string>
+    <string name="profile_cd_avatar">Foto de perfil del usuario</string>
+    <string name="profile_cd_online_status">Usuario en línea</string>
+    <string name="profile_cd_edit_profile">Editar información de perfil</string>
+
+    <!-- Sección: Ritmo y Descanso (F-20) -->
+    <string name="settings_section_rhythm">RITMO Y DESCANSO</string>
+    <string name="settings_badge_ai_sync" translatable="false">IA SYNC</string>
+    <string name="settings_dynamic_breaks_title">Sugerencia dinámica de descansos</string>
+    <string name="settings_dynamic_breaks_desc">Aumenta las pausas en tareas nocturnas o sesiones largas</string>
+    <string name="settings_silence_notifs_title">Silenciar notificaciones internas</string>
+    <string name="settings_silence_notifs_desc">Bloqueo de alertas externas y apps en sesiones</string>
+
+    <!-- Sección: Configuración de Sesiones (F-10 / F-20) -->
+    <string name="settings_section_sessions">CONFIGURACIÓN DE SESIONES</string>
+    <string name="settings_templates_title">Plantillas de Concentración</string>
+    <string name="settings_templates_presets">%1$d Presets activos</string>
+    <string name="settings_templates_desc">Presets de tiempo para el temporizador</string>
+    <string name="settings_cd_open_templates">Abrir configuración de plantillas de concentración</string>
+
+    <!-- Sección: Preferencias del Sistema (F-20) -->
+    <string name="settings_section_system">PREFERENCIAS DEL SISTEMA</string>
+    <string name="settings_priority_alerts_title">Alertas prioritarias P1</string>
+    <string name="settings_priority_alerts_desc">Avisos anticipados antes de deadline crítico</string>
+    <string name="settings_screen_theme_title">Tema de pantalla</string>
+    <string name="settings_screen_theme_desc">Ahorro de batería y contraste extremo OLED</string>
+    <string name="settings_theme_cyber_dark">Cyber Dark</string>
+    <string name="settings_cd_theme_selector">Seleccionar tema de pantalla</string>
+
+    <!-- Sección: Zona de Seguridad (F-21) -->
+    <string name="settings_security_zone_title">Zona de seguridad y purga de datos…</string>
+    <string name="settings_cd_security_zone">Abrir zona de seguridad y purga de datos</string>
+
+    <!-- Pie de página -->
+    <string name="settings_build_info" translatable="false">KRONO Cyber Productivity // Build 2.4.12</string>
+    <string name="settings_logout_action">Cerrar sesión activa</string>
+
+    <!-- Diálogo Oficial de Cierre de Sesión (F-25 CA-4) -->
+    <string name="logout_dialog_title">¿Cerrar sesión de KRONO?</string>
+    <string name="logout_dialog_message">Tus tareas y sesiones de concentración locales se sincronizarán en la nube antes de desconectar este dispositivo. Podrás volver a ingresar en cualquier momento.</string>
+    <string name="logout_dialog_stay">Permanecer en KRONO</string>
+    <string name="logout_dialog_confirm">Cerrar Sesión</string>
+    <string name="logout_dialog_in_progress">Cerrando sesión…</string>
+    <string name="logout_dialog_cd_icon">Aviso de cierre de sesión</string>
+    <string name="logout_dialog_error_fallback">No fue posible cerrar la sesión. Intenta de nuevo.</string>
+</resources>
