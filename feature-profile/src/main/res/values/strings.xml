@@ -13,7 +13,7 @@
     <string name="profile_edit_info_desc">Nombre, rol académico y contactos</string>
     <string name="profile_ai_sync_label">Sincronización KRONO AI</string>
     <string name="profile_ai_sync_active">Activa</string>
-    <string name="profile_ai_sync_completed">100% al día</string>
+    <string name="profile_ai_sync_completed" formatted="false">100% al día</string>
     <string name="profile_cd_avatar">Foto de perfil del usuario</string>
     <string name="profile_cd_online_status">Usuario en línea</string>
     <string name="profile_cd_edit_profile">Editar información de perfil</string>
@@ -82,4 +82,39 @@
     <string name="edit_profile_role_researcher">Investigadora &amp; Operadora</string>
     <string name="edit_profile_cd_role_selector">Seleccionar rol académico y profesional</string>
     <string name="edit_profile_cd_lock_email">Campo de correo bloqueado para edición</string>
+
+    <!-- Zona de Seguridad (F-21 CA-1, CA-2) -->
+    <string name="security_zone_title">Zona de Seguridad</string>
+    <string name="security_zone_badge" translatable="false">ZONA DE RIESGO</string>
+    <string name="security_zone_cd_back">Volver a Ajustes</string>
+    <string name="security_zone_hero_title">¿Qué deseas eliminar?</string>
+    <string name="security_zone_hero_subtitle">Selecciona el nivel de limpieza que deseas realizar en el dispositivo.</string>
+    <string name="security_zone_cd_warning_icon">Aviso de advertencia de zona de seguridad</string>
+    <string name="security_zone_reset_opt_title">Restablecer configuración y datos</string>
+    <string name="security_zone_reset_opt_badge">SEGURO</string>
+    <string name="security_zone_reset_opt_desc">Borra todas las tareas, sesiones, plantillas y avisos en Cloud Firestore, restaurando valores por defecto y conservando tu cuenta.</string>
+    <string name="security_zone_cd_select_reset">Seleccionar opción restablecer configuración y datos</string>
+    <string name="security_zone_delete_opt_title">Eliminar cuenta y perfil completo</string>
+    <string name="security_zone_delete_opt_badge">PERMANENTE</string>
+    <string name="security_zone_delete_opt_desc">Borra definitivamente tus datos en Cloud Firestore y tu cuenta en Firebase Authentication. Esta acción es irreversible.</string>
+    <string name="security_zone_cd_select_delete">Seleccionar opción eliminar cuenta y perfil completo</string>
+    <string name="security_zone_info_note">Se requerirá confirmación de seguridad final en el siguiente paso.</string>
+    <string name="security_zone_action_continue">Continuar a Confirmación</string>
+    <string name="security_zone_action_cancel">Cancelar y volver a Ajustes</string>
+    <string name="security_dialog_reset_title">¿Restablecer configuración y datos?</string>
+    <string name="security_dialog_reset_message">Se borrarán todas tus tareas, sesiones de concentración, plantillas y avisos en Cloud Firestore. Se restaurarán los valores por defecto del sistema, pero conservarás tu cuenta activa.</string>
+    <string name="security_dialog_reset_confirm">Restablecer Datos</string>
+    <string name="security_dialog_reset_in_progress">Restableciendo…</string>
+    <string name="security_dialog_reset_success">Configuración y datos restablecidos correctamente</string>
+    <string name="security_dialog_delete_title">¿Eliminar cuenta definitivamente?</string>
+    <string name="security_dialog_delete_message">Esta acción no se puede deshacer. Todos tus datos en Cloud Firestore y tu cuenta de acceso en Firebase Authentication serán eliminados permanentemente.</string>
+    <string name="security_dialog_delete_reauth_label">Contraseña actual</string>
+    <string name="security_dialog_delete_reauth_placeholder">Ingresa tu contraseña para confirmar</string>
+    <string name="security_dialog_delete_reauth_error_empty">Ingresa tu contraseña actual para confirmar</string>
+    <string name="security_dialog_delete_confirm">Eliminar Cuenta</string>
+    <string name="security_dialog_delete_in_progress">Eliminando cuenta…</string>
+    <string name="security_dialog_delete_cancel">Cancelar</string>
+    <string name="security_dialog_cd_show_password">Mostrar contraseña de reautenticación</string>
+    <string name="security_dialog_cd_hide_password">Ocultar contraseña de reautenticación</string>
+    <string name="security_error_generic">No fue posible completar la operación de seguridad. Intenta de nuevo.</string>
 </resources>

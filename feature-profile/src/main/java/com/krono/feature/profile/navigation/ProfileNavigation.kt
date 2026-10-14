@@ -8,6 +8,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.krono.feature.profile.edit.EditProfileRoute
+import com.krono.feature.profile.security.SecurityZoneRoute
 import com.krono.feature.profile.settings.SettingsEvent
 import com.krono.feature.profile.settings.SettingsScreen
 import com.krono.feature.profile.settings.SettingsViewModel
@@ -21,6 +22,11 @@ const val SETTINGS_ROUTE = "profile/settings"
  * Ruta canónica de la pantalla de Edición de Perfil (F-19 CA-2).
  */
 const val EDIT_PROFILE_ROUTE = "profile/edit"
+
+/**
+ * Ruta canónica de la pantalla de Zona de Seguridad (F-21 CA-1, CA-2).
+ */
+const val SECURITY_ZONE_ROUTE = "profile/security"
 
 /**
  * Contrato de navegación de `feature-profile`.
@@ -114,4 +120,23 @@ fun NavGraphBuilder.editProfileScreen(
         )
     }
 }
+
+/**
+ * Agrega el destino de Zona de Seguridad y purga de datos (F-21 CA-1, CA-2) al grafo de navegación.
+ *
+ * @param onBackClick Navegación hacia atrás (retorno al Hub de Ajustes).
+ * @param onAccountDeleted Navegación tras eliminar la cuenta (retorno a pantalla de Auth).
+ */
+fun NavGraphBuilder.securityZoneScreen(
+    onBackClick: () -> Unit,
+    onAccountDeleted: () -> Unit,
+) {
+    composable(SECURITY_ZONE_ROUTE) {
+        SecurityZoneRoute(
+            onBackClick = onBackClick,
+            onAccountDeleted = onAccountDeleted,
+        )
+    }
+}
+
 

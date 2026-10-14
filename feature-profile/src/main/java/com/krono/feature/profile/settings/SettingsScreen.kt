@@ -88,7 +88,7 @@ fun SettingsScreen(
     onFocusTemplatesClick: () -> Unit,
     onPriorityAlertsToggle: (Boolean) -> Unit,
     onThemeSelectorClick: () -> Unit,
-    onSecurityZoneClick: () -> Unit,
+    onSecurityZoneClick: () -> Unit = {},
     onRequestLogout: () -> Unit,
     onDismissLogoutDialog: () -> Unit,
     onConfirmLogout: () -> Unit,
