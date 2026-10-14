@@ -28,6 +28,8 @@ import com.krono.feature.tasks.navigation.createTaskScreen
 import com.krono.feature.tasks.navigation.editTaskScreen
 import com.krono.feature.tasks.navigation.navigateToCreateTask
 import com.krono.feature.tasks.navigation.navigateToEditTask
+import com.krono.feature.tasks.navigation.navigateToTaskDetail
+import com.krono.feature.tasks.navigation.taskDetailScreen
 import com.krono.feature.tasks.ui.TasksRoute
 
 /**
@@ -51,7 +53,7 @@ fun KronoApp(viewModel: KronoAppViewModel = hiltViewModel()) {
         tareas = {
             TasksRoute(
                 onAddTask = { navController.navigateToCreateTask() },
-                onTaskClick = { taskId -> navController.navigateToEditTask(taskId) },
+                onTaskClick = { taskId -> navController.navigateToTaskDetail(taskId) },
             )
         },
     )
@@ -103,6 +105,9 @@ fun KronoShell(
                 tareas = tareas,
                 alVolverDeCrearTarea = { navController.popBackStack() },
                 alVolverDeEditarTarea = { navController.popBackStack() },
+                alVolverDeDetalleTarea = { navController.popBackStack() },
+                alEditarDesdeDetalle = { taskId -> navController.navigateToEditTask(taskId) },
+                alIniciarEnfoqueDesdeDetalle = { /* Navegación a F-09 */ },
             )
         }
     }
@@ -114,6 +119,9 @@ private fun NavGraphBuilder.grafoPrincipal(
     tareas: @Composable () -> Unit,
     alVolverDeCrearTarea: () -> Unit = {},
     alVolverDeEditarTarea: () -> Unit = {},
+    alVolverDeDetalleTarea: () -> Unit = {},
+    alEditarDesdeDetalle: (String) -> Unit = {},
+    alIniciarEnfoqueDesdeDetalle: (String) -> Unit = {},
 ) {
     navigation(startDestination = KronoDestination.Inicial.route, route = RUTA_GRAFO_PRINCIPAL) {
         // Cada pantalla provisional se reemplaza por el grafo que exponga su feature
@@ -121,6 +129,11 @@ private fun NavGraphBuilder.grafoPrincipal(
         composable(KronoDestination.Inicio.route) { SeccionProvisional(R.string.seccion_inicio) }
         composable(KronoDestination.Tareas.route) { tareas() }
         createTaskScreen(onBack = alVolverDeCrearTarea)
+        taskDetailScreen(
+            onBack = alVolverDeDetalleTarea,
+            onEditTask = alEditarDesdeDetalle,
+            onStartFocus = alIniciarEnfoqueDesdeDetalle,
+        )
         editTaskScreen(onBack = alVolverDeEditarTarea)
         composable(KronoDestination.Calendario.route) { SeccionProvisional(R.string.seccion_calendario) }
         composable(KronoDestination.Ajustes.route) { ajustes() }

@@ -103,4 +103,32 @@
     <string name="error_load_task_generic">No se pudo cargar la tarea. Intenta nuevamente.</string>
     <string name="loading_task">Cargando tarea…</string>
     <string name="cd_cancel_edit">Cancelar edición y volver</string>
+
+    <!-- F-06: Detalle de Tarea y Subtareas -->
+    <string name="task_detail_title">DETALLE DE TAREA</string>
+    <string name="task_detail_due_date_label">LÍMITE DE ENTREGA</string>
+    <string name="task_detail_due_date_format">Vence: %s</string>
+    <string name="task_detail_remaining_hours">En %d horas</string>
+    <string name="task_detail_remaining_single_hour">En 1 hora</string>
+    <string name="task_detail_remaining_minutes">En %d minutos</string>
+    <string name="task_detail_remaining_single_minute">En 1 minuto</string>
+    <string name="task_detail_remaining_days">En %d días</string>
+    <string name="task_detail_remaining_single_day">En 1 día</string>
+    <string name="task_detail_overdue">Vencida</string>
+    <string name="task_detail_estimate_label">ESTIMACIÓN KRONO</string>
+    <string name="task_detail_estimate_value">Tiempo estimado: %s</string>
+    <string name="task_detail_estimate_badge">1 sesión zen</string>
+    <string name="task_detail_subtasks_title">Pasos para completar</string>
+    <string name="task_detail_subtasks_counter">(%d/%d)</string>
+    <string name="task_detail_add_step">Añadir paso</string>
+    <string name="task_detail_add_step_dialog_title">Nuevo paso</string>
+    <string name="task_detail_add_step_hint">Ej. Revisar conclusiones finales</string>
+    <string name="task_detail_quick_note_label">NOTA RÁPIDA</string>
+    <string name="task_detail_focus_button">Iniciar Enfoque (%s) →</string>
+    <string name="task_detail_focus_button_no_time">Iniciar Enfoque →</string>
+    <string name="action_edit">Editar</string>
+    <string name="cd_edit_task">Editar tarea</string>
+    <string name="cd_subtask_checkbox">Marcar paso %s como completado</string>
+    <string name="cd_subtask_checked">Paso %s completado</string>
+    <string name="error_empty_subtask_title">El nombre del paso no puede estar vacío</string>
 </resources>
