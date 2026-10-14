@@ -92,4 +92,15 @@
     <string name="cd_select_date">Seleccionar fecha de entrega</string>
     <string name="cd_select_time">Seleccionar hora de entrega</string>
     <string name="cd_selected_chip">%s seleccionado</string>
+
+    <!-- F-05: Formulario de Editar Tarea -->
+    <string name="edit_task_title">Editar Tarea</string>
+    <string name="edit_task_subtitle">Modifica los detalles y la estimación de tu tarea.</string>
+    <string name="edit_task_banner">Edición de Tarea • Modifica detalles y estimación</string>
+    <string name="action_save_changes">Guardar cambios</string>
+    <string name="action_saving_changes">Guardando cambios…</string>
+    <string name="error_task_not_found">No se encontró la tarea para editar</string>
+    <string name="error_load_task_generic">No se pudo cargar la tarea. Intenta nuevamente.</string>
+    <string name="loading_task">Cargando tarea…</string>
+    <string name="cd_cancel_edit">Cancelar edición y volver</string>
 </resources>
