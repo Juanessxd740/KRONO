@@ -346,23 +346,22 @@ reportan al orquestador.
 | D-5 | ¿El asistente de prioridades es una heurística local o usa un servicio de IA externo? Los diseños mencionan "ritmo circadiano" y "confianza 94%": definir qué datos los respaldan | F-12 | Pendiente |
 | D-6 | ¿Entra la sincronización con Google Calendar y Outlook en el alcance del proyecto académico? | F-18 | Pendiente |
 | D-7 | `CONTRIBUTING.md` define la rama `develop`, pero solo existe `main` en el remoto. ¿Se crea `develop` como base de los PRs? | Flujo de PRs | Resuelta: `develop` existe y es la base de los PRs. |
-| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Parcial (Juan Fernando Sánchez Otero, 2026-10-08): Juan Fernando Sánchez Otero en `app`, `core-*`, `feature-auth` y `feature-tasks`; `feature-onboarding`, `feature-dashboard`, `feature-calendar` y `feature-profile` siguen sin asignar |
+| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Actualizada (2026-10-13): Juan Esteban Sora Ariza es responsable exclusivo del módulo `:feature-profile` (F-15, F-19, F-20, F-21, F-25 CA-4); Juan Fernando Sánchez Otero es responsable de `:feature-tasks` (F-03, F-04), capa `:core` / persistencia Firebase (F-02), `app` y `feature-auth`; `feature-onboarding`, `feature-dashboard` y `feature-calendar` quedan sin asignar para hitos posteriores. |
 | D-9 | Ajustes muestra "Tema de pantalla: Cyber Dark", pero no hay tema claro. ¿Se omite la opción o queda informativa? | F-20 | Pendiente |
 | D-10 | Firebase puede devolver éxito al recuperar la contraseña aunque el correo no exista (protección contra enumeración de correos, activa por defecto en proyectos nuevos). ¿Se desactiva esa protección en la consola de Firebase para conservar el mensaje del diseño "Este correo no está registrado en KRONO", o se cambia el copy a un mensaje neutro ("Si el correo está registrado, te enviamos un enlace")? | F-24 (CA-3) | Resuelta (Juan Fernando Sánchez Otero, 2026-10-08): se conserva el diseño visual de las tres pantallas, con texto neutro para no exponer qué correos tienen cuenta (la protección de Firebase sigue activa). Envío real con `sendPasswordResetEmail`; éxito: "Si el correo está registrado, te enviamos un enlace" (título "¡Enlace Enviado!"); error solo para correo inválido o sin conexión. |
 | D-11 | ¿Las etiquetas de la barra inferior escalan con la fuente del sistema hasta el 200 %? | F-01 | Resuelta (Juan Fernando Sánchez Otero, 2026-10-09): las etiquetas limitan su escala de fuente a 1,3x (`ESCALA_MAXIMA_ETIQUETA`), excepción consciente a WCAG 1.4.4 para que la barra no se desborde; el ícono y la descripción de accesibilidad "Ir a <sección>" se mantienen. El resto de la app escala al 200 % (PR #18). |
 | D-12 | ¿Se implementa el desenfoque real del fondo (backdrop blur) del efecto glass? `Modifier.blur` y `RenderEffect` no desenfocan lo que hay detrás de la superficie; requeriría una librería como Haze. Hoy `glassSurface()` no desenfoca (documentado en `Glass.kt`, PR #18) | Sistema de diseño (`core-ui`) | Pendiente |
 | D-13 | ¿Cómo escalan los íconos pequeños con la fuente del sistema? `iconSmall` es fijo en dp y no crece al 200 % | Sistema de diseño (`core-ui`) | Pendiente |
 
-### Responsables por módulo (D-8, parcial)
+### Responsables por módulo (D-8)
 
-| Módulo | Responsable |
-|---|---|
-| `app`, `core-*` | Juan Fernando Sánchez Otero |
-| `feature-auth`, `feature-tasks` | Juan Fernando Sánchez Otero |
-| `feature-onboarding` | Sin asignar |
-| `feature-dashboard` | Sin asignar |
-| `feature-calendar` | Sin asignar |
-| `feature-profile` | Sin asignar |
+| Módulo / Capa | Responsable | Funcionalidades / Alcance |
+|---|---|---|
+| `:feature-profile` | **Juan Esteban Sora Ariza** (responsable exclusivo) | **F-19** (Perfil de Usuario y Edición), **F-20** (Hub de Ajustes, Ritmo Circadiano y Enfoque Adaptativo), **F-21** (Zona de Seguridad y Purga de Caché), **F-15** (Preferencias de Notificaciones) y **F-25 CA-4** (Flujo y Modal Oficial de Cierre de Sesión). |
+| `:feature-tasks`, `:core` (persistencia Firebase) | **Juan Fernando Sánchez Otero** | `:feature-tasks` (**F-03** Lista de Tareas, **F-04** Crear Tarea) y capa `:core` / persistencia Firebase (**F-02**). Adicionalmente mantiene `app` y `feature-auth`. |
+| `feature-onboarding` | Sin asignar | Hitos posteriores |
+| `feature-dashboard` | Sin asignar | Hitos posteriores |
+| `feature-calendar` | Sin asignar | Hitos posteriores |
 
 ## 10. Registro de cambios
 
