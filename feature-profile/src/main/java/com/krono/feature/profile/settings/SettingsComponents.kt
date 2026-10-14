@@ -165,7 +165,7 @@ internal fun SettingsTopBar(
 @Composable
 internal fun ProfileHeader(
     state: SettingsUiState,
-    onEditProfileClick: () -> Unit,
+    onEditProfileClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(

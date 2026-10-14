@@ -58,4 +58,28 @@
     <string name="logout_dialog_in_progress">Cerrando sesión…</string>
     <string name="logout_dialog_cd_icon">Aviso de cierre de sesión</string>
     <string name="logout_dialog_error_fallback">No fue posible cerrar la sesión. Intenta de nuevo.</string>
+
+    <!-- Edición de Perfil (F-19 CA-2) -->
+    <string name="edit_profile_title">Editar Perfil</string>
+    <string name="edit_profile_cd_back">Volver a Ajustes</string>
+    <string name="edit_profile_cd_avatar">Foto de perfil actual</string>
+    <string name="edit_profile_cd_change_photo">Cambiar foto de perfil</string>
+    <string name="edit_profile_hint_change_photo">Toca la cámara para actualizar foto</string>
+    <string name="edit_profile_label_name">Nombre Completo</string>
+    <string name="edit_profile_placeholder_name">Tu nombre completo</string>
+    <string name="edit_profile_error_name_empty">El nombre completo es obligatorio</string>
+    <string name="edit_profile_label_role">Rol Académico / Profesional</string>
+    <string name="edit_profile_label_email">Correo electrónico / Contacto</string>
+    <string name="edit_profile_email_readonly_note">El correo está vinculado a tu cuenta KRONO</string>
+    <string name="edit_profile_action_save">Guardar Cambios</string>
+    <string name="edit_profile_action_saving">Guardando…</string>
+    <string name="edit_profile_action_cancel">Cancelar</string>
+    <string name="edit_profile_success_toast">Perfil actualizado exitosamente</string>
+    <string name="edit_profile_error_generic">Ocurrió un error al guardar los cambios</string>
+    <string name="edit_profile_role_student_worker">Estudiante y Trabajadora</string>
+    <string name="edit_profile_role_full_time_student">Estudiante Tiempo Completo</string>
+    <string name="edit_profile_role_tech_professional">Profesional Técnico</string>
+    <string name="edit_profile_role_researcher">Investigadora &amp; Operadora</string>
+    <string name="edit_profile_cd_role_selector">Seleccionar rol académico y profesional</string>
+    <string name="edit_profile_cd_lock_email">Campo de correo bloqueado para edición</string>
 </resources>

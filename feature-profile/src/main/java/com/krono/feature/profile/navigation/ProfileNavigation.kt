@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.krono.feature.profile.edit.EditProfileRoute
 import com.krono.feature.profile.settings.SettingsEvent
 import com.krono.feature.profile.settings.SettingsScreen
 import com.krono.feature.profile.settings.SettingsViewModel
@@ -15,6 +16,11 @@ import com.krono.feature.profile.settings.SettingsViewModel
  * Ruta canónica de la pantalla de Ajustes y Perfil (F-19, F-20, F-25 CA-4).
  */
 const val SETTINGS_ROUTE = "profile/settings"
+
+/**
+ * Ruta canónica de la pantalla de Edición de Perfil (F-19 CA-2).
+ */
+const val EDIT_PROFILE_ROUTE = "profile/edit"
 
 /**
  * Contrato de navegación de `feature-profile`.
@@ -90,3 +96,22 @@ internal fun SettingsRoute(
         onConfirmLogout = viewModel::onConfirmLogout,
     )
 }
+
+/**
+ * Agrega el destino de Edición de Perfil (F-19 CA-2) al grafo de navegación.
+ *
+ * @param onBackClick Acción al presionar atrás o cancelar la edición.
+ * @param onProfileSaved Acción al completar y guardar los cambios exitosamente (por defecto regresa atrás).
+ */
+fun NavGraphBuilder.editProfileScreen(
+    onBackClick: () -> Unit,
+    onProfileSaved: () -> Unit = onBackClick,
+) {
+    composable(EDIT_PROFILE_ROUTE) {
+        EditProfileRoute(
+            onBackClick = onBackClick,
+            onProfileSaved = onProfileSaved,
+        )
+    }
+}
+

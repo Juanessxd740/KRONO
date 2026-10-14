@@ -82,7 +82,7 @@ import com.krono.feature.profile.R
 fun SettingsScreen(
     state: SettingsUiState,
     onBackClick: () -> Unit,
-    onEditProfileClick: () -> Unit,
+    onEditProfileClick: () -> Unit = {},
     onDynamicBreaksToggle: (Boolean) -> Unit,
     onSilenceNotificationsToggle: (Boolean) -> Unit,
     onFocusTemplatesClick: () -> Unit,
