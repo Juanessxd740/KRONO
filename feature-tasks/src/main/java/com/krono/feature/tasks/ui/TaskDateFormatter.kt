@@ -47,4 +47,30 @@ object TaskDateFormatter {
         }
         return context.getString(R.string.estimated_duration_format, durationString)
     }
+
+    /**
+     * Formatea el tiempo restante calculado en una cadena amigable en español (F-06 CA-1).
+     */
+    fun formatRemainingTime(context: Context, remainingTime: com.krono.feature.tasks.detail.RemainingTime): String = when (remainingTime) {
+        is com.krono.feature.tasks.detail.RemainingTime.Overdue ->
+            context.getString(R.string.task_detail_overdue)
+        is com.krono.feature.tasks.detail.RemainingTime.InMinutes ->
+            if (remainingTime.minutes == 1L) {
+                context.getString(R.string.task_detail_remaining_single_minute)
+            } else {
+                context.getString(R.string.task_detail_remaining_minutes, remainingTime.minutes)
+            }
+        is com.krono.feature.tasks.detail.RemainingTime.InHours ->
+            if (remainingTime.hours == 1L) {
+                context.getString(R.string.task_detail_remaining_single_hour)
+            } else {
+                context.getString(R.string.task_detail_remaining_hours, remainingTime.hours)
+            }
+        is com.krono.feature.tasks.detail.RemainingTime.InDays ->
+            if (remainingTime.days == 1L) {
+                context.getString(R.string.task_detail_remaining_single_day)
+            } else {
+                context.getString(R.string.task_detail_remaining_days, remainingTime.days)
+            }
+    }
 }

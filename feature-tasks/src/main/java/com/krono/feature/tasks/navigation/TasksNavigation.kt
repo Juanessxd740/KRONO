@@ -7,7 +7,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.krono.feature.tasks.create.ui.CreateTaskRoute
-import com.krono.feature.tasks.edit.EditTaskViewModel.Companion.TASK_ID_NAV_ARG
+import com.krono.feature.tasks.detail.TaskDetailViewModel.Companion.TASK_ID_NAV_ARG
+import com.krono.feature.tasks.detail.ui.TaskDetailRoute
+import com.krono.feature.tasks.edit.EditTaskViewModel.Companion.TASK_ID_NAV_ARG as EDIT_TASK_ID_NAV_ARG
 import com.krono.feature.tasks.edit.ui.EditTaskRoute
 import com.krono.feature.tasks.ui.TasksRoute
 
@@ -22,6 +24,16 @@ const val TASKS_ROUTE = "tareas"
 const val CREATE_TASK_ROUTE = "tareas/nueva"
 
 /**
+ * Ruta base para la pantalla de detalle de tarea y subtareas (F-06).
+ */
+const val TASK_DETAIL_ROUTE_BASE = "tareas/detalle"
+
+/**
+ * Ruta canónica con argumento de la pantalla de detalle de tarea (F-06).
+ */
+const val TASK_DETAIL_ROUTE = "$TASK_DETAIL_ROUTE_BASE/{$TASK_ID_NAV_ARG}"
+
+/**
  * Ruta base para la pantalla de edición de tarea (F-05).
  */
 const val EDIT_TASK_ROUTE_BASE = "tareas/editar"
@@ -29,7 +41,7 @@ const val EDIT_TASK_ROUTE_BASE = "tareas/editar"
 /**
  * Ruta canónica con argumento de la pantalla de edición de tarea (F-05).
  */
-const val EDIT_TASK_ROUTE = "$EDIT_TASK_ROUTE_BASE/{$TASK_ID_NAV_ARG}"
+const val EDIT_TASK_ROUTE = "$EDIT_TASK_ROUTE_BASE/{$EDIT_TASK_ID_NAV_ARG}"
 
 /**
  * Navega hacia la pantalla de tareas.
@@ -43,6 +55,13 @@ fun NavController.navigateToTasks(navOptions: NavOptions? = null) {
  */
 fun NavController.navigateToCreateTask(navOptions: NavOptions? = null) {
     navigate(CREATE_TASK_ROUTE, navOptions)
+}
+
+/**
+ * Navega hacia la pantalla de detalle de tarea recibiendo su [taskId] (F-06 CA-1).
+ */
+fun NavController.navigateToTaskDetail(taskId: String, navOptions: NavOptions? = null) {
+    navigate("$TASK_DETAIL_ROUTE_BASE/$taskId", navOptions)
 }
 
 /**
@@ -66,6 +85,32 @@ fun NavGraphBuilder.tasksScreen(
         TasksRoute(
             onAddTask = onAddTask,
             onTaskClick = onTaskClick,
+        )
+    }
+}
+
+/**
+ * Registra el destino del detalle de tarea y subtareas (F-06) en el grafo de navegación.
+ *
+ * @param onBack Callback invocado para regresar a la lista de tareas.
+ * @param onEditTask Callback invocado para editar la tarea (F-05).
+ * @param onStartFocus Callback invocado para iniciar el modo enfoque con la tarea (F-09).
+ */
+fun NavGraphBuilder.taskDetailScreen(
+    onBack: () -> Unit,
+    onEditTask: (String) -> Unit,
+    onStartFocus: (String) -> Unit,
+) {
+    composable(
+        route = TASK_DETAIL_ROUTE,
+        arguments = listOf(
+            navArgument(TASK_ID_NAV_ARG) { type = NavType.StringType },
+        ),
+    ) {
+        TaskDetailRoute(
+            onBack = onBack,
+            onEditTask = onEditTask,
+            onStartFocus = onStartFocus,
         )
     }
 }
@@ -96,7 +141,7 @@ fun NavGraphBuilder.editTaskScreen(
     composable(
         route = EDIT_TASK_ROUTE,
         arguments = listOf(
-            navArgument(TASK_ID_NAV_ARG) { type = NavType.StringType },
+            navArgument(EDIT_TASK_ID_NAV_ARG) { type = NavType.StringType },
         ),
     ) {
         EditTaskRoute(
