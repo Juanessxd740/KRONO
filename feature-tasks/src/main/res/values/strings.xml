@@ -131,4 +131,17 @@
     <string name="cd_subtask_checkbox">Marcar paso %s como completado</string>
     <string name="cd_subtask_checked">Paso %s completado</string>
     <string name="error_empty_subtask_title">El nombre del paso no puede estar vacío</string>
+
+    <!-- F-07: Eliminar o posponer tarea (CA-1, CA-2, CA-3) -->
+    <string name="delete_task_dialog_title">¿Eliminar tarea de tu agenda?</string>
+    <string name="delete_task_dialog_description">Esta acción retirará la tarea de tus pendientes y reajustará tus cálculos de tiempo disponible sin penalizar tu ritmo.</string>
+    <string name="delete_task_status_in_progress">EN CURSO</string>
+    <string name="delete_task_status_pending">PENDIENTE</string>
+    <string name="delete_task_subtasks_none">Sin subtareas asociadas</string>
+    <string name="delete_task_subtasks_single">1 subtarea asociada se descartará</string>
+    <string name="delete_task_subtasks_multiple">%d subtareas asociadas se descartarán</string>
+    <string name="delete_task_keep_action">Conservar tarea</string>
+    <string name="delete_task_confirm_action">Sí, eliminar tarea</string>
+    <string name="delete_task_postpone_action">O posponer para mañana sin borrar</string>
+    <string name="cd_confirm_delete_dialog">Confirmar eliminación de tarea</string>
 </resources>

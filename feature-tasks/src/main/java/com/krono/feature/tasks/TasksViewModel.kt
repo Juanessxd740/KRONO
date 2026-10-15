@@ -15,8 +15,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import javax.inject.Inject
 
@@ -39,14 +43,16 @@ class TasksViewModel @Inject constructor(
     }
 
     private val selectedCategory = MutableStateFlow(TaskCategoryFilter.TODAS)
+    private val taskPendingDelete = MutableStateFlow<Task?>(null)
     private val errorMessage = MutableStateFlow<String?>(null)
 
     /** Estado reactivo observable por la interfaz de usuario. */
     val uiState: StateFlow<TasksUiState> = combine(
         observeTasksUseCase(),
         selectedCategory,
+        taskPendingDelete,
         errorMessage,
-    ) { allTasks, categoryFilter, error ->
+    ) { allTasks, categoryFilter, pendingDelete, error ->
         val today = currentDateProvider()
 
         // 1. Conteo de tareas por filtro para los chips de la cabecera
@@ -81,6 +87,7 @@ class TasksViewModel @Inject constructor(
             dailyPendingCount = pendingCount,
             todayTasks = todayGroup,
             thisWeekTasks = thisWeekGroup,
+            taskPendingDelete = pendingDelete,
             errorMessage = error,
         )
     }.stateIn(
@@ -115,7 +122,74 @@ class TasksViewModel @Inject constructor(
     }
 
     /**
-     * Elimina una tarea y sus subtareas asociadas.
+     * Solicita la eliminación de una tarea abriendo el diálogo de confirmación (F-07 CA-1).
+     *
+     * @param task Tarea a eliminar junto a sus subtareas asociadas.
+     */
+    fun onRequestDeleteTask(task: Task) {
+        taskPendingDelete.value = task
+    }
+
+    /**
+     * Cierra el diálogo de confirmación de eliminación conservando la tarea (F-07 CA-2).
+     */
+    fun onDismissDeleteDialog() {
+        taskPendingDelete.value = null
+    }
+
+    /**
+     * Confirma la eliminación de la tarea pendiente de confirmación y sus subtareas (F-07 CA-2).
+     */
+    fun onConfirmDeleteTask() {
+        val task = taskPendingDelete.value ?: return
+        viewModelScope.launch {
+            taskPendingDelete.value = null
+            when (val result = deleteTaskUseCase(task.id)) {
+                is KronoResult.Error -> {
+                    errorMessage.value = result.throwable.message
+                }
+                is KronoResult.Success -> {
+                    errorMessage.value = null
+                }
+                is KronoResult.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * Pospone la tarea para el día de mañana sumando exactamente un día a su fecha límite (F-07 CA-3).
+     * Si la tarea no tiene fecha límite previa, calcula mañana deterministamente con [currentDateProvider].
+     *
+     * @param task Tarea a posponer; si es nula, toma la tarea pendiente en [taskPendingDelete].
+     */
+    fun onPostponeTaskToTomorrow(task: Task? = null) {
+        val targetTask = task ?: taskPendingDelete.value ?: return
+        val currentDueDate = targetTask.dueDate
+        val newDueDate = if (currentDueDate != null) {
+            val nextDate = currentDueDate.date.plus(1, DateTimeUnit.DAY)
+            LocalDateTime(nextDate, currentDueDate.time)
+        } else {
+            val today = currentDateProvider()
+            val tomorrow = today.plus(1, DateTimeUnit.DAY)
+            LocalDateTime(tomorrow, DEFAULT_DUE_TIME)
+        }
+        val updatedTask = targetTask.copy(dueDate = newDueDate)
+        viewModelScope.launch {
+            taskPendingDelete.value = null
+            when (val result = upsertTaskUseCase(updatedTask)) {
+                is KronoResult.Error -> {
+                    errorMessage.value = result.throwable.message
+                }
+                is KronoResult.Success -> {
+                    errorMessage.value = null
+                }
+                is KronoResult.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * Elimina una tarea y sus subtareas asociadas directamente.
      */
     fun onDeleteTask(taskId: String) {
         viewModelScope.launch {
@@ -140,5 +214,6 @@ class TasksViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        val DEFAULT_DUE_TIME = LocalTime(23, 59)
     }
 }

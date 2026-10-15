@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
+import com.krono.core.domain.task.DeleteTaskUseCase
 import com.krono.core.domain.task.ObserveTaskByIdUseCase
 import com.krono.core.domain.task.Subtask
 import com.krono.core.domain.task.UpsertTaskUseCase
@@ -17,15 +18,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 
 /**
- * ViewModel que gobierna la visualización y gestión del detalle de tarea y sus subtareas (F-06).
+ * ViewModel que gobierna la visualización y gestión del detalle de tarea y sus subtareas (F-06, F-07).
  *
  * Cumple estrictamente con el aislamiento de arquitectura: sin imports de `androidx.compose.*`.
  */
@@ -34,6 +38,7 @@ class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val observeTaskByIdUseCase: ObserveTaskByIdUseCase,
     private val upsertTaskUseCase: UpsertTaskUseCase,
+    private val deleteTaskUseCase: DeleteTaskUseCase,
 ) : ViewModel() {
 
     /** Proveedor del instante actual; modificable en pruebas unitarias para aislar el tiempo deterministamente. */
@@ -186,6 +191,75 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     /**
+     * Abre el diálogo de confirmación para eliminar la tarea actual (F-07 CA-1).
+     */
+    fun onDeleteTaskClicked() {
+        _uiState.update { it.copy(isConfirmingDelete = true) }
+    }
+
+    /**
+     * Cierra el diálogo de confirmación de eliminación conservando la tarea (F-07 CA-2).
+     */
+    fun onDismissDeleteDialog() {
+        _uiState.update { it.copy(isConfirmingDelete = false) }
+    }
+
+    /**
+     * Confirma la eliminación de la tarea actual y sus subtareas, navegando hacia atrás (F-07 CA-2).
+     */
+    fun onConfirmDeleteTask() {
+        val taskId = _uiState.value.task?.id ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isConfirmingDelete = false) }
+            when (val result = deleteTaskUseCase(taskId)) {
+                is KronoResult.Success -> {
+                    _events.emit(TaskDetailEvent.NavigateBack)
+                }
+                is KronoResult.Error -> {
+                    val msg = result.throwable.message
+                    _uiState.update { it.copy(errorMessage = msg) }
+                    if (msg != null) {
+                        _events.emit(TaskDetailEvent.ShowSnackbar(msg))
+                    }
+                }
+                is KronoResult.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * Pospone la tarea para el día de mañana sumando un día a la fecha límite sin eliminarla (F-07 CA-3).
+     * Si la tarea no tiene fecha límite previa, calcula mañana deterministamente con [currentDateTimeProvider].
+     */
+    fun onPostponeTaskToTomorrow() {
+        val currentTask = _uiState.value.task ?: return
+        val currentDueDate = currentTask.dueDate
+        val newDueDate = if (currentDueDate != null) {
+            val nextDate = currentDueDate.date.plus(1, DateTimeUnit.DAY)
+            LocalDateTime(nextDate, currentDueDate.time)
+        } else {
+            val today = currentDateTimeProvider().date
+            val tomorrow = today.plus(1, DateTimeUnit.DAY)
+            LocalDateTime(tomorrow, DEFAULT_DUE_TIME)
+        }
+        val updatedTask = currentTask.copy(dueDate = newDueDate)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isConfirmingDelete = false) }
+            when (val result = upsertTaskUseCase(updatedTask)) {
+                is KronoResult.Success -> Unit
+                is KronoResult.Error -> {
+                    val msg = result.throwable.message
+                    _uiState.update { it.copy(errorMessage = msg) }
+                    if (msg != null) {
+                        _events.emit(TaskDetailEvent.ShowSnackbar(msg))
+                    }
+                }
+                is KronoResult.Loading -> Unit
+            }
+        }
+    }
+
+    /**
      * Limpia el mensaje de error general mostrado.
      */
     fun clearErrorMessage() {
@@ -214,5 +288,6 @@ class TaskDetailViewModel @Inject constructor(
 
         private const val MINUTES_PER_HOUR = 60
         private const val HOURS_PER_DAY = 24
+        val DEFAULT_DUE_TIME = LocalTime(23, 59)
     }
 }

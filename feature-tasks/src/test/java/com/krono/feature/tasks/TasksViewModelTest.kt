@@ -20,13 +20,15 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Pruebas unitarias para [TasksViewModel] (F-03 CA-1 a CA-4).
+ * Pruebas unitarias para [TasksViewModel] (F-03 CA-1 a CA-4, F-07 CA-1 a CA-3).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModelTest {
@@ -196,6 +198,138 @@ class TasksViewModelTest {
 
             val empty = awaitItem()
             assertTrue(empty.isEmpty)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alPedirEliminarTarea_estableceTaskPendingDeleteParaConfirmacion() = runTest {
+        // F-07 CA-1: Se solicita confirmación con los datos de la tarea y subtareas
+        val task = Task(id = "t1", title = "Tarea para eliminar")
+        fakeRepository.givenTasks(task)
+
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            awaitItem() // Initial data
+
+            viewModel.onRequestDeleteTask(task)
+
+            val state = awaitItem()
+            assertNotNull(state.taskPendingDelete)
+            assertEquals("t1", state.taskPendingDelete?.id)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alDescartarDialogoEliminar_limpiaTaskPendingDeleteSinEliminar() = runTest {
+        // F-07 CA-2: Con "Conservar tarea" no cambia nada
+        val task = Task(id = "t1", title = "Conservar")
+        fakeRepository.givenTasks(task)
+
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            awaitItem() // Initial data
+
+            viewModel.onRequestDeleteTask(task)
+            val stateWithPending = awaitItem()
+            assertEquals("t1", stateWithPending.taskPendingDelete?.id)
+
+            viewModel.onDismissDeleteDialog()
+            val stateAfterDismiss = awaitItem()
+            assertNull(stateAfterDismiss.taskPendingDelete)
+
+            val taskResult = fakeRepository.getTaskById("t1")
+            assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alConfirmarEliminacion_eliminaTareaYSubtareasConDeleteTaskUseCase() = runTest {
+        // F-07 CA-2: Al elegir "Sí, eliminar tarea" se eliminan la tarea y sus subtareas
+        val task = Task(id = "t1", title = "Eliminar de verdad")
+        fakeRepository.givenTasks(task)
+
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            awaitItem() // Initial data
+
+            viewModel.onRequestDeleteTask(task)
+            awaitItem() // Con pending delete
+
+            viewModel.onConfirmDeleteTask()
+            advanceUntilIdle()
+
+            val stateAfterDelete = awaitItem()
+            assertNull(stateAfterDelete.taskPendingDelete)
+            assertTrue(stateAfterDelete.isEmpty)
+
+            val taskResult = fakeRepository.getTaskById("t1")
+            assertTrue(taskResult is com.krono.core.common.KronoResult.Error)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alPosponerParaManana_conDueDatePrevia_incrementaUnDiaYPersisteSinEliminar() = runTest {
+        // F-07 CA-3: Mueve la fecha límite un día y la tarea no se elimina
+        val task = Task(
+            id = "t1",
+            title = "Posponer",
+            dueDate = LocalDateTime(2026, 10, 15, 18, 0),
+        )
+        fakeRepository.givenTasks(task)
+
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            awaitItem() // Initial data
+
+            viewModel.onRequestDeleteTask(task)
+            awaitItem()
+
+            viewModel.onPostponeTaskToTomorrow(task)
+            advanceUntilIdle()
+
+            val stateAfterPostpone = awaitItem()
+            assertNull(stateAfterPostpone.taskPendingDelete)
+
+            val taskResult = fakeRepository.getTaskById("t1")
+            assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+            val updated = (taskResult as com.krono.core.common.KronoResult.Success).data
+            assertEquals(LocalDateTime(2026, 10, 16, 18, 0), updated.dueDate)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alPosponerParaManana_sinDueDatePrevia_calculaFechaDeMananaDeterministaConCurrentDateProvider() = runTest {
+        // F-07 CA-3: Sin dueDate previa calcula mañana con currentDateProvider determinista
+        val taskSinFecha = Task(id = "t1", title = "Posponer sin fecha", dueDate = null)
+        fakeRepository.givenTasks(taskSinFecha)
+
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            awaitItem() // Initial data
+
+            viewModel.onRequestDeleteTask(taskSinFecha)
+            awaitItem()
+
+            viewModel.onPostponeTaskToTomorrow(taskSinFecha)
+            advanceUntilIdle()
+
+            val stateAfterPostpone = awaitItem()
+            assertNull(stateAfterPostpone.taskPendingDelete)
+
+            val taskResult = fakeRepository.getTaskById("t1")
+            assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+            val updated = (taskResult as com.krono.core.common.KronoResult.Success).data
+            // fixedToday = 2026-10-15 -> mañana = 2026-10-16 23:59
+            assertEquals(LocalDateTime(2026, 10, 16, 23, 59), updated.dueDate)
+
             cancelAndIgnoreRemainingEvents()
         }
     }

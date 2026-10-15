@@ -51,7 +51,7 @@ import com.krono.feature.tasks.TasksUiState
 import com.krono.feature.tasks.TasksViewModel
 
 /**
- * Punto de entrada con estado para la pantalla de tareas (F-03).
+ * Punto de entrada con estado para la pantalla de tareas (F-03, F-07).
  * Conecta [TasksViewModel] con la interfaz reactiva.
  */
 @Composable
@@ -76,6 +76,10 @@ fun TasksRoute(
         onFilterSelected = viewModel::onSelectCategory,
         onToggleCompletion = viewModel::onToggleTaskCompletion,
         onDeleteTask = viewModel::onDeleteTask,
+        onRequestDeleteTask = viewModel::onRequestDeleteTask,
+        onDismissDeleteDialog = viewModel::onDismissDeleteDialog,
+        onConfirmDeleteTask = viewModel::onConfirmDeleteTask,
+        onPostponeTask = viewModel::onPostponeTaskToTomorrow,
         onAddTask = onAddTask,
         modifier = modifier,
         onTaskClick = onTaskClick,
@@ -84,7 +88,7 @@ fun TasksRoute(
 }
 
 /**
- * Pantalla principal de la lista de tareas (F-03 CA-1 a CA-4).
+ * Pantalla principal de la lista de tareas (F-03 CA-1 a CA-4, F-07 CA-1 a CA-3).
  * Diseñada bajo el sistema visual Lumina Glass con fondo Deep Midnight y acentos Magenta/Cyan.
  */
 @Composable
@@ -95,6 +99,10 @@ fun TasksScreen(
     onDeleteTask: (String) -> Unit,
     onAddTask: () -> Unit,
     modifier: Modifier = Modifier,
+    onRequestDeleteTask: ((Task) -> Unit)? = null,
+    onDismissDeleteDialog: (() -> Unit)? = null,
+    onConfirmDeleteTask: (() -> Unit)? = null,
+    onPostponeTask: ((Task) -> Unit)? = null,
     onTaskClick: ((String) -> Unit)? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -188,7 +196,13 @@ fun TasksScreen(
                                     task = task,
                                     today = state.today,
                                     onToggleCompletion = onToggleCompletion,
-                                    onDelete = onDeleteTask,
+                                    onDelete = {
+                                        if (onRequestDeleteTask != null) {
+                                            onRequestDeleteTask(task)
+                                        } else {
+                                            onDeleteTask(task.id)
+                                        }
+                                    },
                                     onClick = onTaskClick?.let { { it(task.id) } },
                                 )
                             }
@@ -206,13 +220,30 @@ fun TasksScreen(
                                     task = task,
                                     today = state.today,
                                     onToggleCompletion = onToggleCompletion,
-                                    onDelete = onDeleteTask,
+                                    onDelete = {
+                                        if (onRequestDeleteTask != null) {
+                                            onRequestDeleteTask(task)
+                                        } else {
+                                            onDeleteTask(task.id)
+                                        }
+                                    },
                                     onClick = onTaskClick?.let { { it(task.id) } },
                                 )
                             }
                         }
                     }
                 }
+            }
+
+            // Diálogo de confirmación para eliminar o posponer tarea (F-07)
+            if (state.taskPendingDelete != null && onDismissDeleteDialog != null && onConfirmDeleteTask != null && onPostponeTask != null) {
+                ConfirmDeleteTaskDialog(
+                    task = state.taskPendingDelete,
+                    today = state.today,
+                    onDismiss = onDismissDeleteDialog,
+                    onConfirmDelete = onConfirmDeleteTask,
+                    onPostpone = { onPostponeTask(state.taskPendingDelete) },
+                )
             }
         }
     }
