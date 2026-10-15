@@ -13,6 +13,7 @@ import com.krono.core.domain.task.Task
  * @property isTaskNotFound Indica si la tarea no existe en la persistencia.
  * @property isAddingSubtask Indica si se muestra el diálogo para añadir una nueva subtarea.
  * @property isSavingSubtask Indica si se está persistiendo una actualización de subtareas.
+ * @property isConfirmingDelete Indica si se muestra el diálogo de confirmación de eliminación (F-07).
  * @property errorMessage Mensaje de error general si falla una operación.
  */
 data class TaskDetailUiState(
@@ -22,6 +23,7 @@ data class TaskDetailUiState(
     val isTaskNotFound: Boolean = false,
     val isAddingSubtask: Boolean = false,
     val isSavingSubtask: Boolean = false,
+    val isConfirmingDelete: Boolean = false,
     val errorMessage: String? = null,
 ) {
     /** Cantidad total de subtareas embebidas. */

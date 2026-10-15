@@ -17,6 +17,7 @@ import kotlinx.datetime.todayIn
  * @property dailyPendingCount Cantidad de tareas de hoy pendientes de resolver.
  * @property todayTasks Lista de tareas clasificadas para la sección "Para Hoy".
  * @property thisWeekTasks Lista de tareas clasificadas para la sección "Esta Semana".
+ * @property taskPendingDelete Tarea seleccionada pendiente de confirmación de eliminación o posposición (F-07).
  * @property errorMessage Mensaje de error a desplegar si alguna operación falla.
  */
 data class TasksUiState(
@@ -28,6 +29,7 @@ data class TasksUiState(
     val dailyPendingCount: Int = 0,
     val todayTasks: List<Task> = emptyList(),
     val thisWeekTasks: List<Task> = emptyList(),
+    val taskPendingDelete: Task? = null,
     val errorMessage: String? = null,
 ) {
     /** Indica si no hay ninguna tarea para mostrar en la vista actual (CA-4). */

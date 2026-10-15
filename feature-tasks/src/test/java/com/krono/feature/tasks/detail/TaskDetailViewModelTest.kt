@@ -2,6 +2,7 @@ package com.krono.feature.tasks.detail
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.krono.core.domain.task.DeleteTaskUseCase
 import com.krono.core.domain.task.FakeTaskRepository
 import com.krono.core.domain.task.ObserveTaskByIdUseCase
 import com.krono.core.domain.task.Subtask
@@ -28,11 +29,14 @@ import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Pruebas unitarias para [TaskDetailViewModel] cubriendo todos los criterios de F-06 (docs/SPEC.md).
+ * Pruebas unitarias para [TaskDetailViewModel] cubriendo todos los criterios de F-06 y F-07 (docs/SPEC.md).
  *
- * - CA-1: Precarga de atributos, cálculo determinista de tiempo restante ("En 3 horas") y progreso x/n.
- * - CA-2: Conmutación y adición de subtareas con actualización reactiva y persistencia.
- * - CA-3: Acción "Iniciar Enfoque" y emisión de evento hacia F-09.
+ * - F-06 CA-1: Precarga de atributos, cálculo determinista de tiempo restante ("En 3 horas") y progreso x/n.
+ * - F-06 CA-2: Conmutación y adición de subtareas con actualización reactiva y persistencia.
+ * - F-06 CA-3: Acción "Iniciar Enfoque" y emisión de evento hacia F-09.
+ * - F-07 CA-1: Confirmación de eliminación con conteo de subtareas.
+ * - F-07 CA-2: Eliminación persistente con DeleteTaskUseCase y conservación con descarte.
+ * - F-07 CA-3: Posponer para mañana sumando 1 día deterministamente con UpsertTaskUseCase.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskDetailViewModelTest {
@@ -43,6 +47,7 @@ class TaskDetailViewModelTest {
     private lateinit var fakeRepository: FakeTaskRepository
     private lateinit var observeTaskByIdUseCase: ObserveTaskByIdUseCase
     private lateinit var upsertTaskUseCase: UpsertTaskUseCase
+    private lateinit var deleteTaskUseCase: DeleteTaskUseCase
 
     private val sampleTask = Task(
         id = "task-100",
@@ -68,6 +73,7 @@ class TaskDetailViewModelTest {
         fakeRepository = FakeTaskRepository()
         observeTaskByIdUseCase = ObserveTaskByIdUseCase(fakeRepository)
         upsertTaskUseCase = UpsertTaskUseCase(fakeRepository)
+        deleteTaskUseCase = DeleteTaskUseCase(fakeRepository)
     }
 
     @After
@@ -85,6 +91,7 @@ class TaskDetailViewModelTest {
             savedStateHandle = savedStateHandle,
             observeTaskByIdUseCase = observeTaskByIdUseCase,
             upsertTaskUseCase = upsertTaskUseCase,
+            deleteTaskUseCase = deleteTaskUseCase,
         ).apply {
             currentDateTimeProvider = { fixedNow }
         }
@@ -257,5 +264,94 @@ class TaskDetailViewModelTest {
         assertFalse(state.isLoading)
         assertTrue(state.isTaskNotFound)
         assertNull(state.task)
+    }
+
+    @Test
+    fun alPedirEliminarTarea_activaConfirmacionDeEliminacion() = runTest {
+        // F-07 CA-1: Se muestra confirmación al solicitar eliminar
+        fakeRepository.givenTasks(sampleTask)
+        val viewModel = createViewModel("task-100")
+        advanceUntilIdle()
+
+        viewModel.onDeleteTaskClicked()
+
+        assertTrue(viewModel.uiState.value.isConfirmingDelete)
+    }
+
+    @Test
+    fun alDescartarDialogoEliminar_desactivaConfirmacionSinEliminar() = runTest {
+        // F-07 CA-2: Con "Conservar tarea" no cambia nada
+        fakeRepository.givenTasks(sampleTask)
+        val viewModel = createViewModel("task-100")
+        advanceUntilIdle()
+
+        viewModel.onDeleteTaskClicked()
+        assertTrue(viewModel.uiState.value.isConfirmingDelete)
+
+        viewModel.onDismissDeleteDialog()
+        assertFalse(viewModel.uiState.value.isConfirmingDelete)
+
+        val taskResult = fakeRepository.getTaskById("task-100")
+        assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+    }
+
+    @Test
+    fun alConfirmarEliminarTarea_eliminaYEmiteNavigateBack() = runTest {
+        // F-07 CA-2: Al elegir "Sí, eliminar tarea" se elimina la tarea y sus subtareas
+        fakeRepository.givenTasks(sampleTask)
+        val viewModel = createViewModel("task-100")
+        advanceUntilIdle()
+
+        viewModel.events.test {
+            viewModel.onDeleteTaskClicked()
+            viewModel.onConfirmDeleteTask()
+            advanceUntilIdle()
+
+            val event = awaitItem()
+            assertTrue(event is TaskDetailEvent.NavigateBack)
+
+            val taskResult = fakeRepository.getTaskById("task-100")
+            assertTrue(taskResult is com.krono.core.common.KronoResult.Error)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun alPosponerParaManana_incrementaUnDiaYPersisteSinEliminar() = runTest {
+        // F-07 CA-3: Mueve la fecha límite un día y la tarea no se elimina
+        fakeRepository.givenTasks(sampleTask)
+        val viewModel = createViewModel("task-100")
+        advanceUntilIdle()
+
+        viewModel.onDeleteTaskClicked()
+        viewModel.onPostponeTaskToTomorrow()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfirmingDelete)
+
+        val taskResult = fakeRepository.getTaskById("task-100")
+        assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+        val updatedTask = (taskResult as com.krono.core.common.KronoResult.Success).data
+        // La fecha original era 2026-10-24 18:00 -> pasa a 2026-10-25 18:00
+        assertEquals(LocalDateTime(2026, 10, 25, 18, 0), updatedTask.dueDate)
+    }
+
+    @Test
+    fun alPosponerParaManana_sinDueDatePrevia_asignaFechaDeMananaDeterminista() = runTest {
+        // F-07 CA-3: Sin dueDate previa calcula mañana con currentDateTimeProvider
+        val taskSinFecha = sampleTask.copy(id = "task-sin-fecha", dueDate = null)
+        fakeRepository.givenTasks(taskSinFecha)
+        val viewModel = createViewModel("task-sin-fecha")
+        advanceUntilIdle()
+
+        viewModel.onPostponeTaskToTomorrow()
+        advanceUntilIdle()
+
+        val taskResult = fakeRepository.getTaskById("task-sin-fecha")
+        assertTrue(taskResult is com.krono.core.common.KronoResult.Success)
+        val updatedTask = (taskResult as com.krono.core.common.KronoResult.Success).data
+        // fixedNow = 2026-10-24 15:00 -> mañana es 2026-10-25 23:59
+        assertEquals(LocalDateTime(2026, 10, 25, 23, 59), updatedTask.dueDate)
     }
 }

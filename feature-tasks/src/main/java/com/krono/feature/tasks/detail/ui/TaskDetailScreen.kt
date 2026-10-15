@@ -65,13 +65,14 @@ import com.krono.feature.tasks.detail.RemainingTime
 import com.krono.feature.tasks.detail.TaskDetailEvent
 import com.krono.feature.tasks.detail.TaskDetailUiState
 import com.krono.feature.tasks.detail.TaskDetailViewModel
+import com.krono.feature.tasks.ui.ConfirmDeleteTaskDialog
 import com.krono.feature.tasks.ui.TaskDateFormatter
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * Punto de entrada con estado para la pantalla de detalle de tarea y subtareas (F-06).
+ * Punto de entrada con estado para la pantalla de detalle de tarea y subtareas (F-06, F-07).
  * Conecta [TaskDetailViewModel] con los eventos y la navegación.
  *
  * @param onBack Callback para volver a la pantalla anterior.
@@ -106,6 +107,10 @@ fun TaskDetailRoute(
         state = state,
         onBack = onBack,
         onEdit = viewModel::onEditTaskClicked,
+        onDelete = viewModel::onDeleteTaskClicked,
+        onDismissDeleteDialog = viewModel::onDismissDeleteDialog,
+        onConfirmDelete = viewModel::onConfirmDeleteTask,
+        onPostpone = viewModel::onPostponeTaskToTomorrow,
         onToggleSubtask = viewModel::onToggleSubtask,
         onOpenAddStepDialog = viewModel::onOpenAddSubtaskDialog,
         onDismissAddStepDialog = viewModel::onDismissAddSubtaskDialog,
@@ -117,7 +122,7 @@ fun TaskDetailRoute(
 }
 
 /**
- * Pantalla principal del detalle de tarea y subtareas (F-06 CA-1, CA-2, CA-3).
+ * Pantalla principal del detalle de tarea y subtareas (F-06 CA-1, CA-2, CA-3, F-07 CA-1, CA-2, CA-3).
  *
  * @param state Estado reactivo inmutable.
  * @param onBack Callback para volver a la lista de tareas.
@@ -128,6 +133,10 @@ fun TaskDetailRoute(
  * @param onConfirmAddStep Confirma la creación de una subtarea.
  * @param onStartFocus Solicita inicio de modo enfoque.
  * @param modifier Modificador de diseño.
+ * @param onDelete Callback para abrir el diálogo de confirmación de eliminación (F-07).
+ * @param onDismissDeleteDialog Callback para descartar el diálogo de eliminación (F-07).
+ * @param onConfirmDelete Callback para confirmar la eliminación de la tarea (F-07).
+ * @param onPostpone Callback para posponer la tarea para mañana (F-07).
  * @param snackbarHostState Estado para mensajes temporales.
  */
 @Composable
@@ -141,6 +150,10 @@ fun TaskDetailScreen(
     onConfirmAddStep: (String) -> Unit,
     onStartFocus: () -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null,
+    onDismissDeleteDialog: (() -> Unit)? = null,
+    onConfirmDelete: (() -> Unit)? = null,
+    onPostpone: (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val context = LocalContext.current
@@ -153,6 +166,7 @@ fun TaskDetailScreen(
             TaskDetailTopBar(
                 onBack = onBack,
                 onEdit = onEdit,
+                onDelete = onDelete,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = KronoSpacing.md, vertical = KronoSpacing.sm),
@@ -314,6 +328,17 @@ fun TaskDetailScreen(
                 AddSubtaskDialog(
                     onConfirm = onConfirmAddStep,
                     onDismiss = onDismissAddStepDialog,
+                )
+            }
+
+            // Diálogo de confirmación para eliminar o posponer tarea (F-07)
+            if (state.isConfirmingDelete && state.task != null && onDismissDeleteDialog != null && onConfirmDelete != null && onPostpone != null) {
+                ConfirmDeleteTaskDialog(
+                    task = state.task,
+                    today = today,
+                    onDismiss = onDismissDeleteDialog,
+                    onConfirmDelete = onConfirmDelete,
+                    onPostpone = onPostpone,
                 )
             }
         }
