@@ -83,6 +83,7 @@ fun SettingsScreen(
     state: SettingsUiState,
     onBackClick: () -> Unit,
     onEditProfileClick: () -> Unit = {},
+    onNotificationPrefsClick: () -> Unit = {},
     onDynamicBreaksToggle: (Boolean) -> Unit,
     onSilenceNotificationsToggle: (Boolean) -> Unit,
     onFocusTemplatesClick: () -> Unit,
@@ -261,6 +262,41 @@ fun SettingsScreen(
                             checked = state.priorityAlertsEnabled,
                             onCheckedChange = onPriorityAlertsToggle,
                         )
+
+                        HorizontalDivider(color = OutlineVariant.copy(alpha = 0.35f), thickness = KronoGlass.borderWidth)
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onNotificationPrefsClick)
+                                .padding(vertical = KronoSpacing.xs),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(KronoSpacing.xs / 2),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_notifications_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OnSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.settings_notifications_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                )
+                            }
+
+                            Icon(
+                                painter = painterResource(KronoIcons.ArrowForward),
+                                contentDescription = stringResource(R.string.settings_cd_open_notifications),
+                                tint = OnSurfaceVariant,
+                                modifier = Modifier.size(KronoSizes.iconMedium),
+                            )
+                        }
 
                         HorizontalDivider(color = OutlineVariant.copy(alpha = 0.35f), thickness = KronoGlass.borderWidth)
 

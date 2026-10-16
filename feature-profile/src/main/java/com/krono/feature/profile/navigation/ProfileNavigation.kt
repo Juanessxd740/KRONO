@@ -8,6 +8,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.krono.feature.profile.edit.EditProfileRoute
+import com.krono.feature.profile.notifications.NotificationPreferencesRoute
 import com.krono.feature.profile.security.SecurityZoneRoute
 import com.krono.feature.profile.settings.SettingsEvent
 import com.krono.feature.profile.settings.SettingsScreen
@@ -29,6 +30,11 @@ const val EDIT_PROFILE_ROUTE = "profile/edit"
 const val SECURITY_ZONE_ROUTE = "profile/security"
 
 /**
+ * Ruta canónica de la pantalla de Preferencias de Notificaciones y Alarmas (F-15).
+ */
+const val NOTIFICATION_PREFS_ROUTE = "profile/notifications"
+
+/**
  * Contrato de navegación de `feature-profile`.
  *
  * Agrega el destino de Ajustes al grafo de navegación de la aplicación sin acoplar
@@ -38,6 +44,7 @@ const val SECURITY_ZONE_ROUTE = "profile/security"
  * @param onEditProfileClick Navegación para editar el perfil del usuario.
  * @param onFocusTemplatesClick Navegación al configurador de plantillas de concentración.
  * @param onSecurityZoneClick Navegación a la zona de seguridad y purga de datos.
+ * @param onNotificationPrefsClick Navegación a la pantalla de notificaciones y alarmas (F-15).
  * @param onLoggedOut Notificación de cierre de sesión exitoso (para redirigir a Auth).
  * @param onThemeSelectorClick Acción para abrir el selector de tema visual.
  */
@@ -46,6 +53,7 @@ fun NavGraphBuilder.settingsScreen(
     onEditProfileClick: () -> Unit = {},
     onFocusTemplatesClick: () -> Unit = {},
     onSecurityZoneClick: () -> Unit = {},
+    onNotificationPrefsClick: () -> Unit = {},
     onLoggedOut: () -> Unit,
     onThemeSelectorClick: () -> Unit = {},
 ) {
@@ -55,6 +63,7 @@ fun NavGraphBuilder.settingsScreen(
             onEditProfileClick = onEditProfileClick,
             onFocusTemplatesClick = onFocusTemplatesClick,
             onSecurityZoneClick = onSecurityZoneClick,
+            onNotificationPrefsClick = onNotificationPrefsClick,
             onLoggedOut = onLoggedOut,
             onThemeSelectorClick = onThemeSelectorClick,
         )
@@ -73,6 +82,7 @@ internal fun SettingsRoute(
     onEditProfileClick: () -> Unit,
     onFocusTemplatesClick: () -> Unit,
     onSecurityZoneClick: () -> Unit,
+    onNotificationPrefsClick: () -> Unit,
     onLoggedOut: () -> Unit,
     onThemeSelectorClick: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -91,6 +101,7 @@ internal fun SettingsRoute(
         state = state,
         onBackClick = onBackClick,
         onEditProfileClick = onEditProfileClick,
+        onNotificationPrefsClick = onNotificationPrefsClick,
         onDynamicBreaksToggle = viewModel::onDynamicBreaksToggle,
         onSilenceNotificationsToggle = viewModel::onSilenceNotificationsToggle,
         onFocusTemplatesClick = onFocusTemplatesClick,
@@ -138,5 +149,21 @@ fun NavGraphBuilder.securityZoneScreen(
         )
     }
 }
+
+/**
+ * Agrega el destino de Notificaciones y Alarmas (F-15 CA-1, CA-2, CA-3) al grafo de navegación.
+ *
+ * @param onBackClick Navegación hacia atrás (retorno al Hub de Ajustes).
+ */
+fun NavGraphBuilder.notificationPreferencesScreen(
+    onBackClick: () -> Unit,
+) {
+    composable(NOTIFICATION_PREFS_ROUTE) {
+        NotificationPreferencesRoute(
+            onBackClick = onBackClick,
+        )
+    }
+}
+
 
 

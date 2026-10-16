@@ -117,4 +117,40 @@
     <string name="security_dialog_cd_show_password">Mostrar contraseña de reautenticación</string>
     <string name="security_dialog_cd_hide_password">Ocultar contraseña de reautenticación</string>
     <string name="security_error_generic">No fue posible completar la operación de seguridad. Intenta de nuevo.</string>
+
+    <!-- F-15: Recordatorios y preferencias de notificación -->
+    <string name="notification_prefs_title">Notificaciones y Alarmas</string>
+    <string name="notification_prefs_subtitle">Configura recordatorios y avisos esenciales para tu jornada.</string>
+    <string name="notification_prefs_badge">AJUSTES</string>
+    <string name="notification_prefs_back">Volver al Perfil</string>
+    <string name="notification_prefs_cd_back">Volver a la pantalla anterior</string>
+    <string name="notification_prefs_permission_banner_title">Permiso de notificaciones pendiente</string>
+    <string name="notification_prefs_permission_banner_desc">Activa el permiso para recibir alertas de tus entregas y bloques de concentración.</string>
+    <string name="notification_prefs_permission_action_grant">Conceder permiso</string>
+    <string name="notification_prefs_permission_granted_badge">NOTIFICACIONES ACTIVAS</string>
+    <string name="notification_prefs_section_tasks">RECORDATORIOS DE TAREAS</string>
+    <string name="notification_prefs_deadline_title">Avisos de entrega</string>
+    <string name="notification_prefs_deadline_desc">Notificar %1$d min antes del plazo</string>
+    <string name="notification_prefs_anticipation_label">Tiempo de anticipación</string>
+    <string name="notification_prefs_min_10">10 min</string>
+    <string name="notification_prefs_min_15">15 min</string>
+    <string name="notification_prefs_min_30">30 min (Por defecto)</string>
+    <string name="notification_prefs_min_60">60 min</string>
+    <string name="notification_prefs_cd_select_minutes">Seleccionar %1$d minutos de anticipación</string>
+    <string name="notification_prefs_sound_title">Alarma sonora de inicio</string>
+    <string name="notification_prefs_sound_desc">Tono discreto al empezar bloque</string>
+    <string name="notification_prefs_action_save">Guardar Preferencias</string>
+    <string name="notification_prefs_action_saving">Guardando…</string>
+    <string name="notification_prefs_action_reset">Restablecer valores predeterminados</string>
+    <string name="notification_prefs_success_saved">Preferencias guardadas correctamente</string>
+    <string name="notification_prefs_defaults_restored">Valores predeterminados restablecidos</string>
+    <string name="notification_prefs_error_generic">Ocurrió un error al guardar las preferencias</string>
+    <string name="notification_prefs_cd_deadline_icon">Ícono de avisos de entrega</string>
+    <string name="notification_prefs_cd_sound_icon">Ícono de alarma sonora</string>
+    <string name="notification_prefs_cd_permission_icon">Ícono de permiso de notificaciones</string>
+
+    <!-- Navegación a notificaciones desde Ajustes -->
+    <string name="settings_notifications_title">Notificaciones y Alarmas</string>
+    <string name="settings_notifications_desc">Configura recordatorios y avisos esenciales</string>
+    <string name="settings_cd_open_notifications">Abrir preferencias de notificaciones y alarmas</string>
 </resources>
