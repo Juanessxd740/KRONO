@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
 import com.krono.core.domain.auth.AuthError
 import com.krono.core.domain.auth.LogoutUseCase
+import com.krono.feature.profile.data.ProfileLocalStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,13 +36,27 @@ sealed interface SettingsEvent {
  * Cumple estrictamente la regla de arquitectura de KRONO: no importa `androidx.compose.*`.
  *
  * @property logout Caso de uso oficial de dominio para cerrar la sesión activa.
+ * @property localStore Almacén local persistente para reactividad y persistencia entre reinicios.
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val logout: LogoutUseCase,
+    private val localStore: ProfileLocalStore,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
+    constructor(logout: LogoutUseCase) : this(logout, ProfileLocalStore())
+
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(
+            userName = localStore.userName.value,
+            userRole = localStore.userRole.value,
+            userEmail = localStore.userEmail.value,
+            userInitials = calculateInitials(localStore.userName.value),
+            dynamicBreaksEnabled = localStore.dynamicBreaksEnabled.value,
+            silenceInternalNotificationsEnabled = localStore.silenceInternalNotificationsEnabled.value,
+            priorityAlertsEnabled = localStore.priorityAlertsEnabled.value,
+        ),
+    )
 
     /** Flujo de estado visual observable para la UI. */
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -49,12 +66,53 @@ class SettingsViewModel @Inject constructor(
     /** Canal de eventos de un solo uso para navegación desacoplada. */
     val events: Flow<SettingsEvent> = _events.receiveAsFlow()
 
+    init {
+        viewModelScope.launch {
+            combine(
+                localStore.userName,
+                localStore.userRole,
+                localStore.userEmail,
+            ) { name, role, email ->
+                Triple(name, role, email)
+            }.collect { (name, role, email) ->
+                _uiState.update { current ->
+                    current.copy(
+                        userName = name,
+                        userRole = role,
+                        userEmail = email,
+                        userInitials = calculateInitials(name),
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            combine(
+                localStore.dynamicBreaksEnabled,
+                localStore.silenceInternalNotificationsEnabled,
+                localStore.priorityAlertsEnabled,
+            ) { dynamicBreaks, silenceNotifs, priorityAlerts ->
+                Triple(dynamicBreaks, silenceNotifs, priorityAlerts)
+            }.collect { (dynamicBreaks, silenceNotifs, priorityAlerts) ->
+                _uiState.update { current ->
+                    current.copy(
+                        dynamicBreaksEnabled = dynamicBreaks,
+                        silenceInternalNotificationsEnabled = silenceNotifs,
+                        priorityAlertsEnabled = priorityAlerts,
+                    )
+                }
+            }
+        }
+    }
+
+
     /**
      * Alterna la preferencia de pausas dinámicas según ritmo circadiano.
      *
      * @param enabled Nuevo valor del interruptor.
      */
     fun onDynamicBreaksToggle(enabled: Boolean) {
+        localStore.setDynamicBreaksEnabled(enabled)
         _uiState.update { it.copy(dynamicBreaksEnabled = enabled) }
     }
 
@@ -64,6 +122,7 @@ class SettingsViewModel @Inject constructor(
      * @param enabled Nuevo valor del interruptor.
      */
     fun onSilenceNotificationsToggle(enabled: Boolean) {
+        localStore.setSilenceInternalNotificationsEnabled(enabled)
         _uiState.update { it.copy(silenceInternalNotificationsEnabled = enabled) }
     }
 
@@ -73,8 +132,10 @@ class SettingsViewModel @Inject constructor(
      * @param enabled Nuevo valor del interruptor.
      */
     fun onPriorityAlertsToggle(enabled: Boolean) {
+        localStore.setPriorityAlertsEnabled(enabled)
         _uiState.update { it.copy(priorityAlertsEnabled = enabled) }
     }
+
 
     /**
      * Abre el diálogo oficial de confirmación de cierre de sesión (F-25 CA-4).
@@ -150,4 +211,13 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
+
+    private fun calculateInitials(name: String): String =
+        name.split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+            .joinToString("")
+            .ifEmpty { "K" }
 }
+

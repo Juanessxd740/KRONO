@@ -622,7 +622,7 @@ internal fun LogoutConfirmationDialog(
                     ),
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        painter = painterResource(KronoIcons.CheckCircle),
                         contentDescription = null,
                         tint = DeepMidnight,
                         modifier = Modifier.size(KronoSizes.iconSmall),

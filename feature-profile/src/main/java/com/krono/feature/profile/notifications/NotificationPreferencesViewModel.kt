@@ -3,6 +3,7 @@ package com.krono.feature.profile.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.NotificationPrefs
 import com.krono.feature.profile.domain.ResetNotificationPrefsUseCase
 import com.krono.feature.profile.domain.SaveNotificationPrefsUseCase
@@ -29,14 +30,29 @@ import javax.inject.Inject
  *
  * @property saveNotificationPrefs Caso de uso para validar y guardar las preferencias.
  * @property resetNotificationPrefs Caso de uso para restablecer las preferencias a valores por defecto.
+ * @property localStore Almacén local persistente para cargar las preferencias guardadas.
  */
 @HiltViewModel
 class NotificationPreferencesViewModel @Inject constructor(
     private val saveNotificationPrefs: SaveNotificationPrefsUseCase,
     private val resetNotificationPrefs: ResetNotificationPrefsUseCase,
+    private val localStore: ProfileLocalStore,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(NotificationPreferencesUiState())
+    constructor(
+        saveNotificationPrefs: SaveNotificationPrefsUseCase,
+        resetNotificationPrefs: ResetNotificationPrefsUseCase,
+    ) : this(saveNotificationPrefs, resetNotificationPrefs, ProfileLocalStore())
+
+    private val _uiState = MutableStateFlow(
+        NotificationPreferencesUiState(
+            deadlineReminderMinutes = localStore.deadlineReminderMinutes.value,
+            deadlineRemindersEnabled = localStore.deadlineRemindersEnabled.value,
+            focusStartSound = localStore.focusStartSound.value,
+            soundTone = localStore.soundTone.value,
+        ),
+    )
+
 
     /** Flujo de estado visual inmutable observable por la pantalla. */
     val uiState: StateFlow<NotificationPreferencesUiState> = _uiState.asStateFlow()

@@ -27,10 +27,10 @@ dependencies {
     // Reglas de arquitectura: este módulo NUNCA depende de otro feature-*.
     implementation(project(":core:core-common"))
     implementation(project(":core:core-domain"))
-    implementation(project(":core:core-data"))
     implementation(project(":core:core-ui"))
 
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${libs.versions.lifecycle.get()}")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)

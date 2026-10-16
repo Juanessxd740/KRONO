@@ -1,6 +1,7 @@
 package com.krono.feature.profile.domain
 
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import javax.inject.Inject
 
 /**
@@ -11,7 +12,11 @@ import javax.inject.Inject
  *
  * Devuelve siempre un [KronoResult] para evitar excepciones no controladas.
  */
-open class ResetUserDataUseCase @Inject constructor() {
+open class ResetUserDataUseCase @Inject constructor(
+    private val localStore: ProfileLocalStore,
+) {
+
+    constructor() : this(ProfileLocalStore())
 
     /**
      * Ejecuta el restablecimiento integral de datos y configuración del usuario.
@@ -20,6 +25,8 @@ open class ResetUserDataUseCase @Inject constructor() {
      * o [KronoResult.Error] si ocurrió un fallo durante la operación.
      */
     open suspend operator fun invoke(): KronoResult<Unit> {
+        localStore.resetToDefaults()
         return KronoResult.Success(Unit)
     }
 }
+

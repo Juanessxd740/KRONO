@@ -3,7 +3,9 @@ package com.krono.feature.profile.notifications
 import app.cash.turbine.test
 import com.krono.core.common.KronoResult
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.NotificationPrefs
+
 import com.krono.feature.profile.domain.ResetNotificationPrefsUseCase
 import com.krono.feature.profile.domain.SaveNotificationPrefsUseCase
 import kotlinx.coroutines.CompletableDeferred
@@ -204,7 +206,35 @@ class NotificationPreferencesViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun guardarPreferenciasPersisteValoresEnProfileLocalStore() = runTest {
+        val store = ProfileLocalStore()
+        val saveUseCase = SaveNotificationPrefsUseCase(store)
+        val resetUseCase = ResetNotificationPrefsUseCase(store)
+        val vm = NotificationPreferencesViewModel(saveUseCase, resetUseCase, store)
+
+        vm.onDeadlineReminderMinutesChange(45)
+        vm.onFocusStartSoundChange(false)
+        vm.onSoundToneChange("Tono Galáctico")
+
+        vm.onSaveClick()
+        advanceUntilIdle()
+
+        assertEquals(45, store.deadlineReminderMinutes.value)
+        assertFalse(store.focusStartSound.value)
+        assertEquals("Tono Galáctico", store.soundTone.value)
+
+        // Restablecer valores predeterminados (F-15 CA-2)
+        vm.onResetToDefaultsClick()
+        advanceUntilIdle()
+
+        assertEquals(NotificationPrefs.DEFAULT_REMINDER_MINUTES, store.deadlineReminderMinutes.value)
+        assertTrue(store.focusStartSound.value)
+        assertEquals(NotificationPrefs.DEFAULT_SOUND_TONE, store.soundTone.value)
+    }
 }
+
 
 /**
  * Doble de prueba para [SaveNotificationPrefsUseCase].

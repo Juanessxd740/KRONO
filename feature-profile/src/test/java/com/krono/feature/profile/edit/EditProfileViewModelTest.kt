@@ -3,7 +3,9 @@ package com.krono.feature.profile.edit
 import app.cash.turbine.test
 import com.krono.core.common.KronoResult
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.UpdateProfileUseCase
+
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -202,4 +204,26 @@ class EditProfileViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun guardarPerfilPersisteDatosEnProfileLocalStore() = runTest {
+        val store = ProfileLocalStore()
+        val updateUseCase = UpdateProfileUseCase(store)
+        val vm = EditProfileViewModel(updateUseCase, store)
+
+        vm.onNameChange("Beatriz Pinzón")
+        vm.onRoleChange("Economista Senior")
+
+        vm.events.test {
+            vm.onSave()
+            advanceUntilIdle()
+
+            assertEquals(EditProfileEvent.ProfileSaved, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals("Beatriz Pinzón", store.userName.value)
+        assertEquals("Economista Senior", store.userRole.value)
+    }
 }
+

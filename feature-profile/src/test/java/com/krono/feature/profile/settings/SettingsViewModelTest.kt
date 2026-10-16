@@ -7,6 +7,8 @@ import com.krono.core.domain.auth.AuthRepository
 import com.krono.core.domain.auth.LogoutUseCase
 import com.krono.core.domain.auth.User
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.ProfileLocalStore
+
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -222,4 +224,37 @@ class SettingsViewModelTest {
         assertFalse(vm.uiState.value.isLoggingOut)
         assertFalse(vm.uiState.value.showLogoutConfirmationDialog)
     }
+
+    @Test
+    fun modificarInterruptoresPersisteValoresEnProfileLocalStore() {
+        val store = ProfileLocalStore()
+        val vm = SettingsViewModel(LogoutUseCase(authRepository), store)
+
+        vm.onDynamicBreaksToggle(false)
+        assertFalse(store.dynamicBreaksEnabled.value)
+        assertFalse(vm.uiState.value.dynamicBreaksEnabled)
+
+        vm.onSilenceNotificationsToggle(false)
+        assertFalse(store.silenceInternalNotificationsEnabled.value)
+        assertFalse(vm.uiState.value.silenceInternalNotificationsEnabled)
+
+        vm.onPriorityAlertsToggle(false)
+        assertFalse(store.priorityAlertsEnabled.value)
+        assertFalse(vm.uiState.value.priorityAlertsEnabled)
+    }
+
+    @Test
+    fun cambioEnProfileLocalStoreActualizaAutomaticamenteElEstadoVisual() = runTest {
+        val store = ProfileLocalStore()
+        val vm = SettingsViewModel(LogoutUseCase(authRepository), store)
+
+        store.saveProfile("Carlos Sainz", "Piloto F1")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("Carlos Sainz", state.userName)
+        assertEquals("Piloto F1", state.userRole)
+        assertEquals("CS", state.userInitials)
+    }
 }
+

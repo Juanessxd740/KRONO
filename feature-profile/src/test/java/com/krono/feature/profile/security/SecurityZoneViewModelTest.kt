@@ -3,7 +3,9 @@ package com.krono.feature.profile.security
 import app.cash.turbine.test
 import com.krono.core.common.KronoResult
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.DeleteAccountUseCase
+
 import com.krono.feature.profile.domain.ResetUserDataUseCase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -286,4 +288,25 @@ class SecurityZoneViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun restablecerDatosRestauraValoresPorDefectoEnProfileLocalStore() = runTest {
+        val store = ProfileLocalStore()
+        store.saveProfile("Usuario Modificado", "Rol Modificado")
+        store.setDynamicBreaksEnabled(false)
+
+        val resetUseCase = ResetUserDataUseCase(store)
+        val deleteUseCase = DeleteAccountUseCase(store)
+        val vm = SecurityZoneViewModel(resetUseCase, deleteUseCase)
+
+        vm.onSelectAction(SecurityActionType.RESET_DATA)
+        vm.onContinueToConfirmation()
+        vm.onConfirmResetData()
+        advanceUntilIdle()
+
+        assertEquals(ProfileLocalStore.DEFAULT_NAME, store.userName.value)
+        assertEquals(ProfileLocalStore.DEFAULT_ROLE, store.userRole.value)
+        assertTrue(store.dynamicBreaksEnabled.value)
+    }
 }
+

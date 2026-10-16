@@ -56,6 +56,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.krono.core.ui.icons.KronoIcons
@@ -607,7 +608,11 @@ private fun ResetDataConfirmationDialog(
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isResetting) onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = !isResetting,
+            dismissOnClickOutside = !isResetting,
+        ),
         title = {
             Text(
                 text = stringResource(R.string.security_dialog_reset_title),
@@ -679,7 +684,11 @@ private fun DeleteAccountConfirmationDialog(
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = !isDeleting,
+            dismissOnClickOutside = !isDeleting,
+        ),
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

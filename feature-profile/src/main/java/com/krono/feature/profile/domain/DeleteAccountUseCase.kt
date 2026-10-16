@@ -1,6 +1,7 @@
 package com.krono.feature.profile.domain
 
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import javax.inject.Inject
 
 /**
@@ -12,7 +13,11 @@ import javax.inject.Inject
  *
  * Devuelve siempre un [KronoResult] para evitar excepciones no controladas.
  */
-open class DeleteAccountUseCase @Inject constructor() {
+open class DeleteAccountUseCase @Inject constructor(
+    private val localStore: ProfileLocalStore,
+) {
+
+    constructor() : this(ProfileLocalStore())
 
     /**
      * Ejecuta la reautenticación y posterior eliminación de la cuenta.
@@ -25,6 +30,8 @@ open class DeleteAccountUseCase @Inject constructor() {
         if (password.isBlank()) {
             return KronoResult.Error(IllegalArgumentException("La contraseña de reautenticación no puede estar vacía"))
         }
+        localStore.resetToDefaults()
         return KronoResult.Success(Unit)
     }
 }
+

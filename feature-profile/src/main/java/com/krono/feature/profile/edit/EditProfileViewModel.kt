@@ -3,6 +3,7 @@ package com.krono.feature.profile.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.UpdateProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -25,13 +26,24 @@ import javax.inject.Inject
  * Cumple estrictamente la regla de arquitectura de KRONO: no importa `androidx.compose.*`.
  *
  * @property updateProfile Caso de uso para validar y persistir los cambios de perfil.
+ * @property localStore Almacén local persistente para cargar los datos de perfil actuales.
  */
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val updateProfile: UpdateProfileUseCase,
+    private val localStore: ProfileLocalStore,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EditProfileUiState())
+    constructor(updateProfile: UpdateProfileUseCase) : this(updateProfile, ProfileLocalStore())
+
+    private val _uiState = MutableStateFlow(
+        EditProfileUiState(
+            name = localStore.userName.value,
+            role = localStore.userRole.value,
+            email = localStore.userEmail.value,
+        ),
+    )
+
 
     /** Flujo de estado visual inmutable observable por la UI. */
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()

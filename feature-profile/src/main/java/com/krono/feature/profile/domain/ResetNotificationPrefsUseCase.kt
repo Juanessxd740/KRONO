@@ -1,6 +1,7 @@
 package com.krono.feature.profile.domain
 
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import javax.inject.Inject
 
 /**
@@ -10,7 +11,11 @@ import javax.inject.Inject
  * Restaura `deadlineReminderMinutes = 30`, avisos activos y sonido de concentración habilitado,
  * garantizando el cumplimiento estricto de CA-2.
  */
-open class ResetNotificationPrefsUseCase @Inject constructor() {
+open class ResetNotificationPrefsUseCase @Inject constructor(
+    private val localStore: ProfileLocalStore,
+) {
+
+    constructor() : this(ProfileLocalStore())
 
     /**
      * Restablece las preferencias a los valores predeterminados del sistema.
@@ -19,6 +24,9 @@ open class ResetNotificationPrefsUseCase @Inject constructor() {
      * con sus valores base de fábrica.
      */
     open suspend operator fun invoke(): KronoResult<NotificationPrefs> {
-        return KronoResult.Success(NotificationPrefs())
+        val defaults = NotificationPrefs()
+        localStore.saveNotificationPrefs(defaults)
+        return KronoResult.Success(defaults)
     }
 }
+

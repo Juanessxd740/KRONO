@@ -1,6 +1,7 @@
 package com.krono.feature.profile.domain
 
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.ProfileLocalStore
 import javax.inject.Inject
 
 /**
@@ -10,7 +11,11 @@ import javax.inject.Inject
  * Cumple con el aislamiento de arquitectura (D-8) y maneja errores retornando [KronoResult],
  * evitando que excepciones no controladas crucen hacia la capa de presentación.
  */
-open class SaveNotificationPrefsUseCase @Inject constructor() {
+open class SaveNotificationPrefsUseCase @Inject constructor(
+    private val localStore: ProfileLocalStore,
+) {
+
+    constructor() : this(ProfileLocalStore())
 
     /**
      * Valida y guarda las preferencias de notificación provistas.
@@ -23,6 +28,8 @@ open class SaveNotificationPrefsUseCase @Inject constructor() {
         if (prefs.deadlineReminderMinutes <= 0) {
             return KronoResult.Error(IllegalArgumentException("Los minutos de anticipación deben ser mayores a 0"))
         }
+        localStore.saveNotificationPrefs(prefs)
         return KronoResult.Success(Unit)
     }
 }
+
