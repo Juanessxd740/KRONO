@@ -1,3 +1,58 @@
+# KRONO — Especificación del producto
+
+> Fuente de verdad funcional para el equipo y los agentes de desarrollo.
+> Cada funcionalidad tiene un ID (`F-XX`) y criterios de aceptación (`CA-X`)
+> verificables. El desarrollador implementa contra estos criterios y QA aprueba
+> o rechaza contra ellos.
+>
+> Las reglas de arquitectura y del sistema de diseño viven en `CLAUDE.md` y
+> prevalecen sobre cualquier cosa de este documento. Las referencias visuales
+> viven en `/design/` (una carpeta por pantalla con `code.html` + `screen.png`).
+>
+> Lo marcado como **(propuesta)** es una sugerencia inicial que el equipo debe
+> confirmar en la sección 9 antes de implementarlo.
+
+**Versión:** 0.7 · **Última actualización:** 2026-10-13
+
+---
+
+## 1. Visión
+
+KRONO es una app Android de gestión de tiempo para **estudiantes universitarios
+que también trabajan**. En lugar de pedir estimaciones manuales, mide con un
+**cronómetro** la duración real de cada tarea, aprende de ese historial y genera
+estimaciones personalizadas y sugerencias de priorización.
+
+**Métricas de éxito:**
+- Reducir la brecha entre tiempo estimado y tiempo real de las tareas.
+- Reducir la tasa de entregas extemporáneas.
+
+## 2. Usuarios
+
+| Usuario | Qué necesita lograr |
+|---|---|
+| Estudiante que trabaja | Saber cuánto le toman realmente sus tareas, cumplir entregas y equilibrar estudio, trabajo y vida personal |
+
+Categorías de tareas: **Estudio**, **Trabajo**, **Personal**.
+
+## 3. Alcance
+
+**Incluido (por fases, ver sección 8):**
+- Gestión de tareas con subtareas, prioridad, categoría y fecha límite
+- Cronómetro que registra la duración real y modo enfoque por bloques
+- Estimación basada en historial y asistente de prioridades
+- Dashboard diario, notificaciones y recordatorios
+- Calendario día/semana/mes con detección de conflictos
+- Perfil, ajustes y zona de seguridad
+- Autenticación y onboarding
+
+**Fuera de alcance por ahora:**
+- Tema claro o colores dinámicos (Material You)
+- Versión web, iOS o tablet optimizada
+- Funciones sociales o colaborativas entre usuarios
+
+## 4. Requisitos no funcionales
+
 | Área | Requisito |
 |---|---|
 | Plataforma | Android, minSdk 26, compileSdk/targetSdk 35, JDK 17 |
@@ -117,7 +172,7 @@ Las etiquetas de la barra inferior limitan su escala de fuente a 1,3x (D-11); el
 ### Fase 1 — Núcleo: tareas y tiempo real
 
 #### F-02 — Persistencia de tareas
-- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `core-domain`, `core-data` · **Depende de:** F-00, F-22 a F-25 (Auth hecha) · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Alta · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `core-domain`, `core-data` · **Depende de:** F-00, F-22 a F-25 (Auth hecha) · **PR:** —
 
 La persistencia usa Cloud Firestore (D-1) con el modelo de la sección 6 (D-3): subtareas embebidas en la tarea y demás entidades en subcolecciones de `users/{uid}`. El diseño fino de colecciones y documentos se define en esta funcionalidad.
 
@@ -126,7 +181,7 @@ La persistencia usa Cloud Firestore (D-1) con el modelo de la sección 6 (D-3): 
 - **CA-3:** Dado un error de Firestore, cuando un caso de uso falla, entonces devuelve `KronoResult.Error` en lugar de lanzar la excepción.
 
 #### F-03 — Lista de tareas
-- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Alta · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
 
 - **CA-1:** Dado que hay tareas, cuando se abre la lista, entonces se agrupan en "Para Hoy" y "Esta Semana" con su conteo, y cada tarjeta muestra prioridad, título, fecha/hora y estimación si existe.
 - **CA-2:** Dados los filtros Todas, Estudio, Trabajo y Personal, cuando se selecciona uno, entonces solo se muestran las tareas de esa categoría.
@@ -134,7 +189,7 @@ La persistencia usa Cloud Firestore (D-1) con el modelo de la sección 6 (D-3): 
 - **CA-4:** Dado que no hay tareas, cuando se abre la lista, entonces se muestra un estado vacío con acceso a "Añadir Nueva Tarea".
 
 #### F-04 — Crear tarea
-- **Estado:** Pendiente · **Prioridad:** Alta · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Alta · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
 
 - **CA-1:** Dado el formulario, cuando se completan nombre, categoría, fecha, hora, prioridad y tiempo estimado (25m, 45m, 1h u Otro), entonces "Guardar tarea" la crea y vuelve a la lista.
 - **CA-2:** Dado que falta el nombre o la fecha, cuando se intenta guardar, entonces se muestra el error de validación en el campo y no se crea la tarea.
@@ -142,21 +197,21 @@ La persistencia usa Cloud Firestore (D-1) con el modelo de la sección 6 (D-3): 
 - **CA-4:** Dado que el tiempo estimado es opcional, cuando no se elige, entonces la tarea se guarda con `estimatedDuration = null`.
 
 #### F-05 — Editar tarea
-- **Estado:** Pendiente · **Prioridad:** Media · **Módulos:** `feature-tasks` · **Depende de:** F-04 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Media · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `feature-tasks` · **Depende de:** F-04 · **PR:** —
 
 - **CA-1:** Dada una tarea existente, cuando se abre la edición, entonces el formulario viene precargado con sus valores.
 - **CA-2:** Dados cambios válidos, cuando se guarda, entonces se actualizan sin alterar `actualDuration` ni las sesiones registradas.
 - **CA-3:** Las mismas validaciones de F-04 (CA-2 y CA-3) aplican al editar.
 
 #### F-06 — Detalle de tarea y subtareas
-- **Estado:** Pendiente · **Prioridad:** Media · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Media · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
 
 - **CA-1:** Dada una tarea, cuando se abre su detalle, entonces muestra categoría, prioridad, límite de entrega con tiempo restante ("En 3 horas"), estimación, subtareas con progreso (x/n) y nota rápida.
 - **CA-2:** Dado el detalle, cuando se agrega, marca o desmarca una subtarea, entonces el progreso se actualiza y persiste.
 - **CA-3:** Dado el detalle, cuando se toca "Iniciar Enfoque", entonces abre el modo enfoque (F-09) para esa tarea.
 
 #### F-07 — Eliminar o posponer tarea
-- **Estado:** Pendiente · **Prioridad:** Media · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
+- **Estado:** Pendiente · **Prioridad:** Media · **Responsable:** Janer García (Janer-Garcia) · **Módulos:** `feature-tasks` · **Depende de:** F-02 · **PR:** —
 
 - **CA-1:** Dada una tarea, cuando se pide eliminarla, entonces se muestra una confirmación que indica cuántas subtareas se descartarán.
 - **CA-2:** Dada la confirmación, cuando se elige "Sí, eliminar tarea", entonces se eliminan la tarea y sus subtareas; con "Conservar tarea" no cambia nada.
@@ -291,23 +346,23 @@ reportan al orquestador.
 | D-5 | ¿El asistente de prioridades es una heurística local o usa un servicio de IA externo? Los diseños mencionan "ritmo circadiano" y "confianza 94%": definir qué datos los respaldan | F-12 | Pendiente |
 | D-6 | ¿Entra la sincronización con Google Calendar y Outlook en el alcance del proyecto académico? | F-18 | Pendiente |
 | D-7 | `CONTRIBUTING.md` define la rama `develop`, pero solo existe `main` en el remoto. ¿Se crea `develop` como base de los PRs? | Flujo de PRs | Resuelta: `develop` existe y es la base de los PRs. |
-| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Parcial (Juan Fernando Sánchez Otero, 2026-10-08): Juan Fernando Sánchez Otero en `app`, `core-*`, `feature-auth` y `feature-tasks`; `feature-onboarding`, `feature-dashboard`, `feature-calendar` y `feature-profile` siguen sin asignar |
+| D-8 | ¿Qué integrante es responsable de cada módulo? Los agentes solo deben tocar los módulos asignados a quien los ejecuta | Todas | Actualizada (2026-10-13): Janer García (Janer-Garcia) es responsable de F-02 (Persistencia de tareas en Cloud Firestore — core-domain / core-data) y del módulo `:feature-tasks` completo: F-03 (Lista de tareas), F-04 (Crear tarea), F-05 (Editar tarea), F-06 (Detalle de tarea y subtareas) y F-07 (Eliminar o posponer tarea); Juan Esteban Sora Ariza es responsable exclusivo del módulo `:feature-profile` (F-15, F-19, F-20, F-21, F-25 CA-4); Juan Fernando Sánchez Otero mantiene `app` y `feature-auth`; `feature-onboarding`, `feature-dashboard` y `feature-calendar` quedan sin asignar para hitos posteriores. |
 | D-9 | Ajustes muestra "Tema de pantalla: Cyber Dark", pero no hay tema claro. ¿Se omite la opción o queda informativa? | F-20 | Pendiente |
 | D-10 | Firebase puede devolver éxito al recuperar la contraseña aunque el correo no exista (protección contra enumeración de correos, activa por defecto en proyectos nuevos). ¿Se desactiva esa protección en la consola de Firebase para conservar el mensaje del diseño "Este correo no está registrado en KRONO", o se cambia el copy a un mensaje neutro ("Si el correo está registrado, te enviamos un enlace")? | F-24 (CA-3) | Resuelta (Juan Fernando Sánchez Otero, 2026-10-08): se conserva el diseño visual de las tres pantallas, con texto neutro para no exponer qué correos tienen cuenta (la protección de Firebase sigue activa). Envío real con `sendPasswordResetEmail`; éxito: "Si el correo está registrado, te enviamos un enlace" (título "¡Enlace Enviado!"); error solo para correo inválido o sin conexión. |
 | D-11 | ¿Las etiquetas de la barra inferior escalan con la fuente del sistema hasta el 200 %? | F-01 | Resuelta (Juan Fernando Sánchez Otero, 2026-10-09): las etiquetas limitan su escala de fuente a 1,3x (`ESCALA_MAXIMA_ETIQUETA`), excepción consciente a WCAG 1.4.4 para que la barra no se desborde; el ícono y la descripción de accesibilidad "Ir a <sección>" se mantienen. El resto de la app escala al 200 % (PR #18). |
 | D-12 | ¿Se implementa el desenfoque real del fondo (backdrop blur) del efecto glass? `Modifier.blur` y `RenderEffect` no desenfocan lo que hay detrás de la superficie; requeriría una librería como Haze. Hoy `glassSurface()` no desenfoca (documentado en `Glass.kt`, PR #18) | Sistema de diseño (`core-ui`) | Pendiente |
 | D-13 | ¿Cómo escalan los íconos pequeños con la fuente del sistema? `iconSmall` es fijo en dp y no crece al 200 % | Sistema de diseño (`core-ui`) | Pendiente |
 
-### Responsables por módulo (D-8, parcial)
+### Responsables por módulo (D-8)
 
-| Módulo | Responsable |
-|---|---|
-| `app`, `core-*` | Juan Fernando Sánchez Otero |
-| `feature-auth`, `feature-tasks` | Juan Fernando Sánchez Otero |
-| `feature-onboarding` | Sin asignar |
-| `feature-dashboard` | Sin asignar |
-| `feature-calendar` | Sin asignar |
-| `feature-profile` | Sin asignar |
+| Módulo / Capa | Responsable | Funcionalidades / Alcance |
+|---|---|---|
+| `:feature-profile` | **Juan Esteban Sora Ariza** (responsable exclusivo) | **F-19** (Perfil de Usuario y Edición), **F-20** (Hub de Ajustes, Ritmo Circadiano y Enfoque Adaptativo), **F-21** (Zona de Seguridad y Purga de Caché), **F-15** (Preferencias de Notificaciones) y **F-25 CA-4** (Flujo y Modal Oficial de Cierre de Sesión). |
+| `:feature-tasks`, `:core` (persistencia de tareas) | **Janer García (Janer-Garcia)** | **F-02** (Persistencia de tareas en Cloud Firestore — `core-domain` / `core-data`) y módulo `:feature-tasks` completo: **F-03** (Lista de tareas), **F-04** (Crear tarea), **F-05** (Editar tarea), **F-06** (Detalle de tarea y subtareas) y **F-07** (Eliminar o posponer tarea). |
+| `app`, `feature-auth` | **Juan Fernando Sánchez Otero** | Mantiene `app` y `feature-auth`. |
+| `feature-onboarding` | Sin asignar | Hitos posteriores |
+| `feature-dashboard` | Sin asignar | Hitos posteriores |
+| `feature-calendar` | Sin asignar | Hitos posteriores |
 
 ## 10. Registro de cambios
 
@@ -321,6 +376,7 @@ reportan al orquestador.
 | 2026-10-08 | v0.5: D-1 pasa a Firebase: Authentication (correo y contraseña) y Cloud Firestore como única fuente de datos, Room se elimina; F-02 se reformula sobre Firestore y depende de D-3; se descartan el hash con sal, la recuperación simulada y las cuentas locales de prueba; F-22 a F-25 vuelven a En progreso (migración, PR —) con CA-1, CA-3 y CA-6 ajustados y CA-7 (errores) nuevo; nueva decisión abierta D-10 (mensaje de correo no registrado); F-21 CA-2 sigue Bloqueada con razón actualizada; decisión de Juan Fernando Sánchez Otero |
 | 2026-10-08 | v0.6: D-3 resuelta (modelo de datos aprobado en Firestore bajo `users/{uid}`, subtareas embebidas, demás entidades en subcolecciones; F-02 ya no depende de D-3); D-10 resuelta (texto neutro en recuperar contraseña, F-24 CA-3); F-21 CA-1 borra los datos del usuario en Firestore y CA-2 deja de estar Bloqueada (borrado de datos, reautenticación y eliminación de la cuenta); se quita de D-1 la frase obsoleta sobre librerías de red; decisión de Juan Fernando Sánchez Otero |
 | 2026-10-09 | v0.7: cierre de la fase 0 (decisiones de Juan Fernando Sánchez Otero). Estados: F-22 a F-25 Hechas (PR #13, Firebase Authentication), F-01 Hecha (PR #16), F-27 Hecha (PR #17). F-22 a F-25: CA-4 (botón temporal "Cerrar sesión" en Ajustes provisional con diálogo de confirmación) y CA-5 (se elimina la pantalla "Próximo hito"; se entra al flujo principal con barra inferior) ajustados a lo implementado en el PR #16 (decisión del 2026-10-08). D-8: `feature-tasks` asignado a Juan Fernando Sánchez Otero; sigue Parcial para onboarding, dashboard, calendar y profile. D-11 resuelta (etiquetas de la barra inferior limitadas a 1,3x, PR #18). Nuevas decisiones abiertas D-12 (backdrop blur real) y D-13 (escala de íconos pequeños). Nueva sección 11 "Deuda técnica conocida". Se corrige la referencia obsoleta a Room en la nota de F-22 a F-25 |
+| 2026-10-13 | D-8 actualizada: se asigna formalmente a Janer García (Janer-Garcia) la responsabilidad de F-02 (persistencia de tareas en Cloud Firestore — core-domain / core-data) y del módulo feature-tasks completo (F-03, F-04, F-05, F-06 y F-07) |
 
 ## 11. Deuda técnica conocida
 
@@ -336,59 +392,3 @@ decisiones abiertas.
 - Firebase puede rechazar una contraseña aunque los indicadores de fortaleza estén en verde.
 - La sesión en caché persiste si la cuenta se borra desde la consola de Firebase.
 - Firebase BoM queda en 34.12.0, limitado por Kotlin 2.1.0.
-
-> Fuente de verdad funcional para el equipo y los agentes de desarrollo.
-> Cada funcionalidad tiene un ID (`F-XX`) y criterios de aceptación (`CA-X`)
-> verificables. El desarrollador implementa contra estos criterios y QA aprueba
-> o rechaza contra ellos.
->
-> Las reglas de arquitectura y del sistema de diseño viven en `CLAUDE.md` y
-> prevalecen sobre cualquier cosa de este documento. Las referencias visuales
-> viven en `/design/` (una carpeta por pantalla con `code.html` + `screen.png`).
->
-> Lo marcado como **(propuesta)** es una sugerencia inicial que el equipo debe
-> confirmar en la sección 9 antes de implementarlo.
-
-**Versión:** 0.7 · **Última actualización:** 2026-10-09
-# KRONO — Especificación del producto
-
----
-
-## 1. Visión
-
-KRONO es una app Android de gestión de tiempo para **estudiantes universitarios
-que también trabajan**. En lugar de pedir estimaciones manuales, mide con un
-**cronómetro** la duración real de cada tarea, aprende de ese historial y genera
-estimaciones personalizadas y sugerencias de priorización.
-
-**Métricas de éxito:**
-- Reducir la brecha entre tiempo estimado y tiempo real de las tareas.
-- Reducir la tasa de entregas extemporáneas.
-
-## 2. Usuarios
-
-| Usuario | Qué necesita lograr |
-|---|---|
-| Estudiante que trabaja | Saber cuánto le toman realmente sus tareas, cumplir entregas y equilibrar estudio, trabajo y vida personal |
-
-Categorías de tareas: **Estudio**, **Trabajo**, **Personal**.
-
-## 3. Alcance
-
-**Incluido (por fases, ver sección 8):**
-- Gestión de tareas con subtareas, prioridad, categoría y fecha límite
-- Cronómetro que registra la duración real y modo enfoque por bloques
-- Estimación basada en historial y asistente de prioridades
-- Dashboard diario, notificaciones y recordatorios
-- Calendario día/semana/mes con detección de conflictos
-
-- Perfil, ajustes y zona de seguridad
-- Autenticación y onboarding
-
-**Fuera de alcance por ahora:**
-- Tema claro o colores dinámicos (Material You)
-- Versión web, iOS o tablet optimizada
-- Funciones sociales o colaborativas entre usuarios
-
-## 4. Requisitos no funcionales
-
