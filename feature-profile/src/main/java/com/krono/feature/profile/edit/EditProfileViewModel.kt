@@ -3,6 +3,8 @@ package com.krono.feature.profile.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
+import com.krono.core.domain.auth.ObserveSessionUseCase
+import com.krono.feature.profile.data.NoOpAuthRepository
 import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.UpdateProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,24 +28,48 @@ import javax.inject.Inject
  * Cumple estrictamente la regla de arquitectura de KRONO: no importa `androidx.compose.*`.
  *
  * @property updateProfile Caso de uso para validar y persistir los cambios de perfil.
+ * @property observeSession Caso de uso para vincular la cuenta activa de Firebase Authentication.
  * @property localStore Almacén local persistente para cargar los datos de perfil actuales.
  */
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val updateProfile: UpdateProfileUseCase,
+    private val observeSession: ObserveSessionUseCase,
     private val localStore: ProfileLocalStore,
 ) : ViewModel() {
 
-    constructor(updateProfile: UpdateProfileUseCase) : this(updateProfile, ProfileLocalStore())
+    constructor(
+        updateProfile: UpdateProfileUseCase,
+        observeSession: ObserveSessionUseCase,
+    ) : this(
+        updateProfile = updateProfile,
+        observeSession = observeSession,
+        localStore = ProfileLocalStore(),
+    )
+
+    constructor(
+        updateProfile: UpdateProfileUseCase,
+        localStore: ProfileLocalStore,
+    ) : this(
+        updateProfile = updateProfile,
+        observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
+        localStore = localStore,
+    )
+
+    constructor(updateProfile: UpdateProfileUseCase) : this(
+        updateProfile = updateProfile,
+        observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
+        localStore = ProfileLocalStore(),
+    )
 
     private val _uiState = MutableStateFlow(
         EditProfileUiState(
             name = localStore.userName.value,
             role = localStore.userRole.value,
             email = localStore.userEmail.value,
+            avatarUri = localStore.avatarUri.value,
         ),
     )
-
 
     /** Flujo de estado visual inmutable observable por la UI. */
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()
@@ -52,6 +78,28 @@ class EditProfileViewModel @Inject constructor(
 
     /** Canal de eventos de un solo uso para navegación desacoplada. */
     val events: Flow<EditProfileEvent> = _events.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            observeSession().collect { user ->
+                if (user != null) {
+                    localStore.bindUser(user.id, user.email)
+                    _uiState.update { current ->
+                        current.copy(
+                            email = user.email,
+                            name = if (current.name.isBlank() || current.name == ProfileLocalStore.DEFAULT_NAME) {
+                                localStore.userName.value
+                            } else {
+                                current.name
+                            },
+                            role = if (current.role.isBlank()) localStore.userRole.value else current.role,
+                            avatarUri = current.avatarUri ?: localStore.avatarUri.value,
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Actualiza el valor del nombre y limpia los errores activos si el nuevo valor no está en blanco.
@@ -83,6 +131,20 @@ class EditProfileViewModel @Inject constructor(
     }
 
     /**
+     * Actualiza la foto de perfil seleccionada desde la galería local.
+     *
+     * @param uri Cadena que representa el URI de la imagen seleccionada.
+     */
+    fun onAvatarSelected(uri: String) {
+        _uiState.update { current ->
+            current.copy(
+                avatarUri = uri,
+                errorMessage = null,
+            )
+        }
+    }
+
+    /**
      * Cancela la edición y emite el evento para regresar a la pantalla anterior sin guardar.
      */
     fun onCancel() {
@@ -93,13 +155,6 @@ class EditProfileViewModel @Inject constructor(
 
     /**
      * Valida los campos obligatorios y persiste los cambios del perfil del usuario (F-19 CA-2).
-     *
-     * Reglas:
-     * 1. Si ya se está guardando ([EditProfileUiState.isSaving]), descarta la llamada para evitar doble envío.
-     * 2. Si el nombre se encuentra en blanco, actualiza [EditProfileUiState.nameError] y detiene el flujo.
-     * 3. Durante la ejecución activa `isSaving = true`.
-     * 4. Al finalizar exitosamente, emite [EditProfileEvent.ProfileSaved].
-     * 5. En caso de error, desactiva `isSaving` y expone el mensaje de fallo.
      */
     fun onSave() {
         val currentState = _uiState.value
@@ -122,7 +177,7 @@ class EditProfileViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            when (val result = updateProfile(currentState.name, currentState.role)) {
+            when (val result = updateProfile(currentState.name, currentState.role, currentState.avatarUri)) {
                 is KronoResult.Success -> {
                     _uiState.update {
                         it.copy(

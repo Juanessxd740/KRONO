@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.krono.core.common.KronoResult
 import com.krono.core.domain.auth.AuthError
 import com.krono.core.domain.auth.LogoutUseCase
+import com.krono.core.domain.auth.ObserveSessionUseCase
+import com.krono.feature.profile.data.NoOpAuthRepository
 import com.krono.feature.profile.data.ProfileLocalStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -36,21 +38,46 @@ sealed interface SettingsEvent {
  * Cumple estrictamente la regla de arquitectura de KRONO: no importa `androidx.compose.*`.
  *
  * @property logout Caso de uso oficial de dominio para cerrar la sesión activa.
+ * @property observeSession Caso de uso para observar la identidad del usuario autenticado en Firebase.
  * @property localStore Almacén local persistente para reactividad y persistencia entre reinicios.
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val logout: LogoutUseCase,
+    private val observeSession: ObserveSessionUseCase,
     private val localStore: ProfileLocalStore,
 ) : ViewModel() {
 
-    constructor(logout: LogoutUseCase) : this(logout, ProfileLocalStore())
+    constructor(
+        logout: LogoutUseCase,
+        observeSession: ObserveSessionUseCase,
+    ) : this(
+        logout = logout,
+        observeSession = observeSession,
+        localStore = ProfileLocalStore(),
+    )
+
+    constructor(
+        logout: LogoutUseCase,
+        localStore: ProfileLocalStore,
+    ) : this(
+        logout = logout,
+        observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
+        localStore = localStore,
+    )
+
+    constructor(logout: LogoutUseCase) : this(
+        logout = logout,
+        observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
+        localStore = ProfileLocalStore(),
+    )
 
     private val _uiState = MutableStateFlow(
         SettingsUiState(
             userName = localStore.userName.value,
             userRole = localStore.userRole.value,
             userEmail = localStore.userEmail.value,
+            avatarUri = localStore.avatarUri.value,
             userInitials = calculateInitials(localStore.userName.value),
             dynamicBreaksEnabled = localStore.dynamicBreaksEnabled.value,
             silenceInternalNotificationsEnabled = localStore.silenceInternalNotificationsEnabled.value,
@@ -68,19 +95,29 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            observeSession().collect { user ->
+                if (user != null) {
+                    localStore.bindUser(user.id, user.email)
+                }
+            }
+        }
+
+        viewModelScope.launch {
             combine(
                 localStore.userName,
                 localStore.userRole,
                 localStore.userEmail,
-            ) { name, role, email ->
-                Triple(name, role, email)
-            }.collect { (name, role, email) ->
+                localStore.avatarUri,
+            ) { name, role, email, avatar ->
+                ProfileIdentity(name, role, email, avatar)
+            }.collect { identity ->
                 _uiState.update { current ->
                     current.copy(
-                        userName = name,
-                        userRole = role,
-                        userEmail = email,
-                        userInitials = calculateInitials(name),
+                        userName = identity.name,
+                        userRole = identity.role,
+                        userEmail = identity.email,
+                        avatarUri = identity.avatar,
+                        userInitials = calculateInitials(identity.name),
                     )
                 }
             }
@@ -104,7 +141,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
-
 
     /**
      * Alterna la preferencia de pausas dinámicas según ritmo circadiano.
@@ -135,7 +171,6 @@ class SettingsViewModel @Inject constructor(
         localStore.setPriorityAlertsEnabled(enabled)
         _uiState.update { it.copy(priorityAlertsEnabled = enabled) }
     }
-
 
     /**
      * Abre el diálogo oficial de confirmación de cierre de sesión (F-25 CA-4).
@@ -219,5 +254,11 @@ class SettingsViewModel @Inject constructor(
             .mapNotNull { it.firstOrNull()?.uppercaseChar() }
             .joinToString("")
             .ifEmpty { "K" }
-}
 
+    private data class ProfileIdentity(
+        val name: String,
+        val role: String,
+        val email: String,
+        val avatar: String?,
+    )
+}

@@ -22,21 +22,23 @@ sealed interface EditProfileEvent {
  * @property email Correo electrónico de la cuenta (modo informativo/lectura vinculado a Auth).
  * @property role Rol académico/profesional seleccionado por el usuario.
  * @property availableRoles Catálogo de roles seleccionables en la interfaz.
+ * @property avatarUri URI local de la foto de perfil o `null` si se usan iniciales.
  * @property nameError Mensaje de error si la validación del nombre obligatorio falla.
  * @property isSaving Indica si la operación de guardado se encuentra en curso (bloquea envíos concurrentes).
  * @property errorMessage Mensaje de error expuesto si la persistencia falla.
  * @property isSuccess Indica si la persistencia se completó exitosamente.
  */
 data class EditProfileUiState(
-    val name: String = "Alexa Gómez",
-    val email: String = "alexa.gomez@correo.com",
-    val role: String = "Estudiante y Trabajadora",
+    val name: String = "Usuario",
+    val email: String = "",
+    val role: String = "Estudiante y trabajador",
     val availableRoles: List<String> = listOf(
-        "Estudiante y Trabajadora",
-        "Estudiante Tiempo Completo",
-        "Profesional Técnico",
-        "Investigadora & Operadora",
+        "Estudiante y trabajador",
+        "Estudiante",
+        "Trabajador tiempo completo",
+        "Trabajador tiempo parcial",
     ),
+    val avatarUri: String? = null,
     val nameError: String? = null,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,

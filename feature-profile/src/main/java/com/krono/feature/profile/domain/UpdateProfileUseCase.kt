@@ -22,18 +22,22 @@ open class UpdateProfileUseCase @Inject constructor(
      *
      * @param name Nombre completo del usuario (obligatorio).
      * @param role Rol académico / profesional (obligatorio).
+     * @param avatarUri URI local de la foto de perfil seleccionada (opcional).
      * @return [KronoResult.Success] si los cambios son válidos, o [KronoResult.Error]
      * con [IllegalArgumentException] si algún campo obligatorio se encuentra vacío.
      */
-    open suspend operator fun invoke(name: String, role: String): KronoResult<Unit> {
+    open suspend operator fun invoke(
+        name: String,
+        role: String,
+        avatarUri: String? = null,
+    ): KronoResult<Unit> {
         if (name.isBlank()) {
             return KronoResult.Error(IllegalArgumentException("El nombre no puede estar vacío"))
         }
         if (role.isBlank()) {
             return KronoResult.Error(IllegalArgumentException("El rol no puede estar vacío"))
         }
-        localStore.saveProfile(name, role)
+        localStore.saveProfile(name, role, avatarUri)
         return KronoResult.Success(Unit)
     }
 }
-

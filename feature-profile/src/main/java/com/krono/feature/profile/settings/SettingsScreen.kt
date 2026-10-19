@@ -414,9 +414,9 @@ private fun SettingsScreenDefaultPreview() {
     KronoTheme {
         SettingsScreen(
             state = SettingsUiState(
-                userName = "Alexa Gómez",
-                userEmail = "alexa.gomez@correo.com",
-                userRole = "Estudiante y Trabajadora",
+                userName = "Juan Esteban",
+                userEmail = "juan.esteban@correo.com",
+                userRole = "Estudiante y trabajador",
                 dynamicBreaksEnabled = true,
                 silenceInternalNotificationsEnabled = true,
                 priorityAlertsEnabled = true,
@@ -444,9 +444,9 @@ private fun SettingsScreenLogoutDialogPreview() {
     KronoTheme {
         SettingsScreen(
             state = SettingsUiState(
-                userName = "Alexa Gómez",
-                userEmail = "alexa.gomez@correo.com",
-                userRole = "Estudiante y Trabajadora",
+                userName = "Juan Esteban",
+                userEmail = "juan.esteban@correo.com",
+                userRole = "Estudiante y trabajador",
                 showLogoutConfirmationDialog = true,
                 isLoggingOut = false,
             ),
@@ -472,9 +472,9 @@ private fun SettingsScreenLoggingOutPreview() {
     KronoTheme {
         SettingsScreen(
             state = SettingsUiState(
-                userName = "Alexa Gómez",
-                userEmail = "alexa.gomez@correo.com",
-                userRole = "Estudiante y Trabajadora",
+                userName = "Juan Esteban",
+                userEmail = "juan.esteban@correo.com",
+                userRole = "Estudiante y trabajador",
                 showLogoutConfirmationDialog = true,
                 isLoggingOut = true,
             ),

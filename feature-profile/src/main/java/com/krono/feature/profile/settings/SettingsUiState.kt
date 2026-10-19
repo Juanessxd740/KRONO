@@ -9,7 +9,8 @@ package com.krono.feature.profile.settings
  *
  * @property userName Nombre completo del usuario para la tarjeta de identidad.
  * @property userEmail Correo electrónico asociado a la cuenta activa.
- * @property userRole Rol académico y laboral (ej. "Estudiante y Trabajadora").
+ * @property userRole Rol académico y laboral (ej. "Estudiante y trabajador").
+ * @property avatarUri URI local de la foto de perfil o `null` si se usan iniciales.
  * @property isSyncActive Indica si la sincronización en la nube con KRONO AI está activa.
  * @property syncStatusText Texto descriptivo del estado de sincronización (ej. "100% al día").
  * @property userInitials Iniciales generadas para el avatar en caso de ausencia de foto.
@@ -24,12 +25,13 @@ package com.krono.feature.profile.settings
  * @property logoutErrorMessage Mensaje de error si la invocación de cierre de sesión falla.
  */
 data class SettingsUiState(
-    val userName: String = "Alexa Gómez",
-    val userEmail: String = "alexa.gomez@correo.com",
-    val userRole: String = "Estudiante y Trabajadora",
+    val userName: String = "Usuario",
+    val userEmail: String = "",
+    val userRole: String = "Estudiante y trabajador",
+    val avatarUri: String? = null,
     val isSyncActive: Boolean = true,
     val syncStatusText: String = "100% al día",
-    val userInitials: String = "AG",
+    val userInitials: String = "U",
     val dynamicBreaksEnabled: Boolean = true,
     val silenceInternalNotificationsEnabled: Boolean = true,
     val activePresetsCount: Int = 3,

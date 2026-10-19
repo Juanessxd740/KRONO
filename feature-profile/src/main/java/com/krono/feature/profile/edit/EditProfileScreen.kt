@@ -1,9 +1,15 @@
 package com.krono.feature.profile.edit
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -54,6 +60,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -84,6 +92,7 @@ import com.krono.core.ui.theme.SurfaceContainerHigh
 import com.krono.core.ui.theme.SurfaceContainerLow
 import com.krono.core.ui.theme.glassSurface
 import com.krono.feature.profile.R
+import com.krono.feature.profile.ui.rememberAsyncAvatarBitmap
 
 /**
  * Punto de entrada stateful para la pantalla de Edición de Perfil (F-19 CA-2).
@@ -102,6 +111,21 @@ fun EditProfileRoute(
     viewModel: EditProfileViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri: Uri? ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            viewModel.onAvatarSelected(uri.toString())
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -117,6 +141,11 @@ fun EditProfileRoute(
         onBackClick = onBackClick,
         onNameChange = viewModel::onNameChange,
         onRoleChange = viewModel::onRoleChange,
+        onAvatarClick = {
+            imagePickerLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+            )
+        },
         onSaveClick = viewModel::onSave,
         onCancelClick = viewModel::onCancel,
     )
@@ -138,6 +167,7 @@ fun EditProfileRoute(
  * @param onBackClick Acción al presionar el botón de retorno.
  * @param onNameChange Callback al modificar el texto del nombre.
  * @param onRoleChange Callback al seleccionar un nuevo rol.
+ * @param onAvatarClick Callback para abrir el selector de imagen de galería.
  * @param onSaveClick Acción para validar y persistir los cambios.
  * @param onCancelClick Acción para cancelar y descartar modificaciones.
  * @param modifier Modificador de Compose para personalización del contenedor.
@@ -150,6 +180,7 @@ fun EditProfileScreen(
     onRoleChange: (String) -> Unit,
     onSaveClick: () -> Unit,
     onCancelClick: () -> Unit,
+    onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -172,7 +203,8 @@ fun EditProfileScreen(
             // 2. Sección del avatar interactivo
             EditProfileAvatarSection(
                 initials = state.userInitials,
-                onAvatarClick = { /* Selector de galería futuro */ },
+                avatarUri = state.avatarUri,
+                onAvatarClick = onAvatarClick,
             )
 
             // 3. Formulario en superficie de vidrio Lumina Glass
@@ -269,6 +301,7 @@ private fun EditProfileTopBar(
 @Composable
 private fun EditProfileAvatarSection(
     initials: String,
+    avatarUri: String? = null,
     onAvatarClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -296,12 +329,22 @@ private fun EditProfileAvatarSection(
                     .background(SurfaceContainerHigh),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = initials,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryFixedDim,
-                )
+                val bitmap = rememberAsyncAvatarBitmap(avatarUri)
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = stringResource(R.string.edit_profile_cd_avatar),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryFixedDim,
+                    )
+                }
             }
 
             // Botón interactivo de cámara posicionado abajo a la derecha

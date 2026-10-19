@@ -22,6 +22,8 @@ import org.junit.Rule
 import org.junit.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+import com.krono.core.domain.auth.ObserveSessionUseCase
+
 /**
  * Doble de prueba en memoria para [AuthRepository] que soporta compuertas de suspensión ([gate])
  * durante la ejecución de [logout].
@@ -31,8 +33,9 @@ private class TestAuthRepository : AuthRepository {
     var gate: CompletableDeferred<Unit>? = null
     var logoutCalls = 0
         private set
+    val sessionFlow = MutableStateFlow<User?>(null)
 
-    override fun observeSession(): Flow<User?> = MutableStateFlow(null)
+    override fun observeSession(): Flow<User?> = sessionFlow
     override suspend fun login(email: String, password: String): KronoResult<User> = KronoResult.Success(User("id", email))
     override suspend fun register(email: String, password: String): KronoResult<User> = KronoResult.Success(User("id", email))
     override suspend fun requestPasswordReset(email: String): KronoResult<Unit> = KronoResult.Success(Unit)
@@ -71,8 +74,10 @@ class SettingsViewModelTest {
         val vm = createViewModel()
         val state = vm.uiState.value
 
-        assertEquals("Alexa Gómez", state.userName)
-        assertEquals("alexa.gomez@correo.com", state.userEmail)
+        assertEquals("Usuario", state.userName)
+        assertEquals("", state.userEmail)
+        assertEquals("Estudiante y trabajador", state.userRole)
+        assertNull(state.avatarUri)
         assertTrue(state.dynamicBreaksEnabled)
         assertTrue(state.silenceInternalNotificationsEnabled)
         assertTrue(state.priorityAlertsEnabled)
@@ -255,6 +260,36 @@ class SettingsViewModelTest {
         assertEquals("Carlos Sainz", state.userName)
         assertEquals("Piloto F1", state.userRole)
         assertEquals("CS", state.userInitials)
+    }
+
+    @Test
+    fun sesionDeUsuarioAutenticadoActualizaEmailYNombreEnSettings() = runTest {
+        val store = ProfileLocalStore()
+        val vm = SettingsViewModel(
+            logout = LogoutUseCase(authRepository),
+            observeSession = ObserveSessionUseCase(authRepository),
+            localStore = store,
+        )
+
+        authRepository.sessionFlow.value = User(id = "user_789", email = "maria.gonzalez@empresa.com")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("Maria Gonzalez", state.userName)
+        assertEquals("maria.gonzalez@empresa.com", state.userEmail)
+        assertEquals("MG", state.userInitials)
+    }
+
+    @Test
+    fun cambioDeAvatarEnProfileLocalStoreActualizaAvatarUriEnSettings() = runTest {
+        val store = ProfileLocalStore()
+        val vm = SettingsViewModel(LogoutUseCase(authRepository), store)
+
+        store.saveAvatarUri("content://media/picker/photo123")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("content://media/picker/photo123", state.avatarUri)
     }
 }
 

@@ -18,6 +18,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+import com.krono.core.domain.auth.AuthRepository
+import com.krono.core.domain.auth.ObserveSessionUseCase
+import com.krono.core.domain.auth.User
+import com.krono.feature.profile.data.NoOpAuthRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+
 /**
  * Doble de prueba en memoria para [UpdateProfileUseCase] que permite simular latencia
  * suspendida con compuertas ([gate]), registrar llamadas y simular fallos de persistencia.
@@ -31,14 +38,21 @@ private class TestUpdateProfileUseCase : UpdateProfileUseCase() {
         private set
     var lastSavedRole: String? = null
         private set
+    var lastSavedAvatarUri: String? = null
+        private set
 
-    override suspend operator fun invoke(name: String, role: String): KronoResult<Unit> {
+    override suspend operator fun invoke(
+        name: String,
+        role: String,
+        avatarUri: String?,
+    ): KronoResult<Unit> {
         callCount++
         lastSavedName = name
         lastSavedRole = role
+        lastSavedAvatarUri = avatarUri
         gate?.await()
         failure?.let { return KronoResult.Error(it) }
-        return super.invoke(name, role)
+        return super.invoke(name, role, avatarUri)
     }
 }
 
@@ -70,11 +84,21 @@ class EditProfileViewModelTest {
         val vm = createViewModel()
         val state = vm.uiState.value
 
-        assertEquals("Alexa Gómez", state.name)
-        assertEquals("alexa.gomez@correo.com", state.email)
-        assertEquals("Estudiante y Trabajadora", state.role)
+        assertEquals("Usuario", state.name)
+        assertEquals("", state.email)
+        assertEquals("Estudiante y trabajador", state.role)
         assertEquals(4, state.availableRoles.size)
-        assertEquals("AG", state.userInitials)
+        assertEquals(
+            listOf(
+                "Estudiante y trabajador",
+                "Estudiante",
+                "Trabajador tiempo completo",
+                "Trabajador tiempo parcial",
+            ),
+            state.availableRoles,
+        )
+        assertEquals("U", state.userInitials)
+        assertNull(state.avatarUri)
         assertFalse(state.isSaving)
         assertFalse(state.isSuccess)
         assertNull(state.nameError)
@@ -224,6 +248,59 @@ class EditProfileViewModelTest {
 
         assertEquals("Beatriz Pinzón", store.userName.value)
         assertEquals("Economista Senior", store.userRole.value)
+    }
+
+    @Test
+    fun onAvatarSelectedActualizaAvatarUriEnElEstado() {
+        val vm = createViewModel()
+        val uri = "content://media/picker/123"
+
+        vm.onAvatarSelected(uri)
+
+        val state = vm.uiState.value
+        assertEquals(uri, state.avatarUri)
+    }
+
+    @Test
+    fun guardadoExitosoPasaAvatarUriAlCasoDeUso() = runTest {
+        val vm = createViewModel()
+
+        vm.events.test {
+            vm.onNameChange("Laura Rivas")
+            vm.onRoleChange("Estudiante")
+            vm.onAvatarSelected("content://media/picker/456")
+            vm.onSave()
+            advanceUntilIdle()
+
+            val state = vm.uiState.value
+            assertFalse(state.isSaving)
+            assertTrue(state.isSuccess)
+            assertEquals("Laura Rivas", updateProfileUseCase.lastSavedName)
+            assertEquals("Estudiante", updateProfileUseCase.lastSavedRole)
+            assertEquals("content://media/picker/456", updateProfileUseCase.lastSavedAvatarUri)
+
+            assertEquals(EditProfileEvent.ProfileSaved, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun sesionDeUsuarioAutenticadoActualizaEmailYNombreFormateado() = runTest {
+        val sessionFlow = MutableStateFlow<User?>(null)
+        val authRepo = object : AuthRepository by NoOpAuthRepository() {
+            override fun observeSession(): Flow<User?> = sessionFlow
+        }
+        val store = ProfileLocalStore()
+        val observeSession = ObserveSessionUseCase(authRepo)
+        val vm = EditProfileViewModel(updateProfileUseCase, observeSession, store)
+
+        sessionFlow.value = User(id = "user_456", email = "juan.esteban@correo.com")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("Juan Esteban", state.name)
+        assertEquals("juan.esteban@correo.com", state.email)
+        assertEquals("JE", state.userInitials)
     }
 }
 

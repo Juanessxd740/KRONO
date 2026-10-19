@@ -7,8 +7,8 @@
     <string name="profile_cd_back">Volver a la pantalla anterior</string>
 
     <!-- Tarjeta de Identidad de Usuario (F-19) -->
-    <string name="profile_default_name">Alexa Gómez</string>
-    <string name="profile_default_role">Estudiante y Trabajadora</string>
+    <string name="profile_default_name">Usuario</string>
+    <string name="profile_default_role">Estudiante y trabajador</string>
     <string name="profile_edit_info">Editar Información Personal</string>
     <string name="profile_edit_info_desc">Nombre, rol académico y contactos</string>
     <string name="profile_ai_sync_label">Sincronización KRONO AI</string>
@@ -76,10 +76,10 @@
     <string name="edit_profile_action_cancel">Cancelar</string>
     <string name="edit_profile_success_toast">Perfil actualizado exitosamente</string>
     <string name="edit_profile_error_generic">Ocurrió un error al guardar los cambios</string>
-    <string name="edit_profile_role_student_worker">Estudiante y Trabajadora</string>
-    <string name="edit_profile_role_full_time_student">Estudiante Tiempo Completo</string>
-    <string name="edit_profile_role_tech_professional">Profesional Técnico</string>
-    <string name="edit_profile_role_researcher">Investigadora &amp; Operadora</string>
+    <string name="edit_profile_role_student_worker">Estudiante y trabajador</string>
+    <string name="edit_profile_role_student">Estudiante</string>
+    <string name="edit_profile_role_full_time_worker">Trabajador tiempo completo</string>
+    <string name="edit_profile_role_part_time_worker">Trabajador tiempo parcial</string>
     <string name="edit_profile_cd_role_selector">Seleccionar rol académico y profesional</string>
     <string name="edit_profile_cd_lock_email">Campo de correo bloqueado para edición</string>
 

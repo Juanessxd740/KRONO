@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -44,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -70,6 +73,7 @@ import com.krono.core.ui.theme.SurfaceContainerHighest
 import com.krono.core.ui.theme.SurfaceContainerLow
 import com.krono.core.ui.theme.glassSurface
 import com.krono.feature.profile.R
+import com.krono.feature.profile.ui.rememberAsyncAvatarBitmap
 
 /**
  * Cabecera superior de la pantalla de Ajustes con botón de volver atrás y placa CORE v2.4.
@@ -202,12 +206,22 @@ internal fun ProfileHeader(
                             .background(SurfaceContainerHigh),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = state.userInitials,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryFixedDim,
-                        )
+                        val bitmap = rememberAsyncAvatarBitmap(state.avatarUri)
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = stringResource(R.string.profile_cd_avatar),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else {
+                            Text(
+                                text = state.userInitials,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryFixedDim,
+                            )
+                        }
                     }
 
                     // Indicador de estado en línea
@@ -548,12 +562,22 @@ internal fun LogoutConfirmationDialog(
                                     .border(KronoGlass.borderWidth, PrimaryFixedDim.copy(alpha = 0.4f), RoundedCornerShape(KronoSpacing.xs)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(
-                                    text = state.userInitials,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryFixedDim,
-                                )
+                                val bitmap = rememberAsyncAvatarBitmap(state.avatarUri)
+                                if (bitmap != null) {
+                                    Image(
+                                        bitmap = bitmap,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else {
+                                    Text(
+                                        text = state.userInitials,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryFixedDim,
+                                    )
+                                }
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
