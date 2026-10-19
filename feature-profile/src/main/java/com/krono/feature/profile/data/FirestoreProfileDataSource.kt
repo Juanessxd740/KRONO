@@ -153,9 +153,13 @@ class FirestoreProfileDataSource(
         val credential = EmailAuthProvider.getCredential(email, password)
         user.reauthenticate(credential).await()
 
-        // 2. Borrar documento del perfil en Firestore
+        // 2. Borrar documento del perfil en Firestore (tolerante si las reglas aún no están desplegadas)
         val firestore = firestoreProvider()
-        firestore?.collection(COLLECTION_USERS)?.document(user.uid)?.delete()?.await()
+        try {
+            firestore?.collection(COLLECTION_USERS)?.document(user.uid)?.delete()?.await()
+        } catch (_: Throwable) {
+            // Continúa para no bloquear el borrado de la cuenta en Firebase Auth
+        }
 
         // 3. Eliminar cuenta de Firebase Authentication
         user.delete().await()

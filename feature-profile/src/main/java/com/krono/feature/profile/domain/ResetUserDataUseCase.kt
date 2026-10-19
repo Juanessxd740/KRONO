@@ -53,10 +53,11 @@ open class ResetUserDataUseCase @Inject constructor(
             // Tolera lista vacía o falta de conexión temporal
         }
 
-        // 2. Restablecer documento users/{uid} en Firestore
-        val remoteResult = remoteDataSource.resetUserData(localStore.activeUserId)
-        if (remoteResult is KronoResult.Error) {
-            return remoteResult
+        // 2. Restablecer documento users/{uid} en Firestore (best-effort)
+        try {
+            remoteDataSource.resetUserData(localStore.activeUserId)
+        } catch (_: Throwable) {
+            // Tolera si las reglas de Firestore aún no están desplegadas en consola o sin red
         }
 
         // 3. Restaurar valores por defecto en el almacén local

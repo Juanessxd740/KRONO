@@ -263,6 +263,25 @@ class NotificationPreferencesViewModelTest {
         assertTrue(remoteDataSource.lastSavedPrefs?.focusStartSound == true)
         assertEquals(NotificationPrefs.DEFAULT_SOUND_TONE, remoteDataSource.lastSavedPrefs?.soundTone)
     }
+
+    @Test
+    fun saveNotificationPrefsToleraFalloRemotoYPersisteLocalmente() = runTest {
+        val store = ProfileLocalStore()
+        val remoteDataSource = object : NoOpProfileRemoteDataSource() {
+            override suspend fun saveNotificationPrefs(
+                userId: String,
+                prefs: NotificationPrefs,
+            ): KronoResult<Unit> {
+                throw RuntimeException("PERMISSION_DENIED")
+            }
+        }
+        val saveUseCase = SaveNotificationPrefsUseCase(store, remoteDataSource)
+        val result = saveUseCase(NotificationPrefs(deadlineReminderMinutes = 15, focusStartSound = false))
+
+        assertTrue("Debe retornar éxito incluso si Firestore falla", result is KronoResult.Success)
+        assertEquals(15, store.deadlineReminderMinutes.value)
+        assertFalse(store.focusStartSound.value)
+    }
 }
 
 

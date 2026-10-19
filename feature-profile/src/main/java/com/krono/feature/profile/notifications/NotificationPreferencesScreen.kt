@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
@@ -49,6 +50,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -157,6 +163,7 @@ fun NotificationPreferencesRoute(
         onDeadlineReminderMinutesChange = viewModel::onDeadlineReminderMinutesChange,
         onDeadlineRemindersEnabledChange = viewModel::onDeadlineRemindersEnabledChange,
         onFocusStartSoundChange = viewModel::onFocusStartSoundChange,
+        onSoundToneChange = viewModel::onSoundToneChange,
         onRequestPermissionClick = viewModel::onRequestPermissionClick,
         onResetDefaultsClick = viewModel::onResetToDefaultsClick,
         onSaveClick = viewModel::onSaveClick,
@@ -177,6 +184,7 @@ fun NotificationPreferencesRoute(
  * @param onDeadlineReminderMinutesChange Acción al cambiar los minutos de anticipación.
  * @param onDeadlineRemindersEnabledChange Acción al alternar avisos de entrega.
  * @param onFocusStartSoundChange Acción al alternar el tono de inicio de enfoque.
+ * @param onSoundToneChange Acción al seleccionar un nuevo tono sonoro.
  * @param onRequestPermissionClick Acción para solicitar permiso de notificaciones en el sistema.
  * @param onResetDefaultsClick Acción para restablecer a 30 minutos y valores de fábrica (CA-2).
  * @param onSaveClick Acción para guardar las preferencias.
@@ -189,11 +197,14 @@ fun NotificationPreferencesScreen(
     onDeadlineReminderMinutesChange: (Int) -> Unit,
     onDeadlineRemindersEnabledChange: (Boolean) -> Unit,
     onFocusStartSoundChange: (Boolean) -> Unit,
+    onSoundToneChange: (String) -> Unit = {},
     onRequestPermissionClick: () -> Unit,
     onResetDefaultsClick: () -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showToneDialog by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -427,6 +438,78 @@ fun NotificationPreferencesScreen(
                                 ),
                             )
                         }
+
+                        // Selector interactivo de tono sonoro (F-15)
+                        AnimatedVisibility(
+                            visible = state.focusStartSound,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = KronoSpacing.xs),
+                                verticalArrangement = Arrangement.spacedBy(KronoSpacing.xs),
+                            ) {
+                                HorizontalDivider(
+                                    color = OutlineVariant.copy(alpha = 0.25f),
+                                    thickness = KronoGlass.borderWidth,
+                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(role = Role.Button, onClick = { showToneDialog = true })
+                                        .padding(vertical = KronoSpacing.xs),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(KronoSpacing.xs / 2),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.notification_prefs_sound_tone_title),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = OnSurface,
+                                        )
+                                        Text(
+                                            text = stringResource(
+                                                R.string.notification_prefs_sound_tone_desc,
+                                                state.soundTone,
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant,
+                                        )
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(KronoSpacing.sm),
+                                        color = SurfaceContainerLow,
+                                        border = BorderStroke(KronoGlass.borderWidth, OutlineVariant.copy(alpha = 0.5f)),
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = KronoSpacing.sm, vertical = KronoSpacing.xs),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(KronoSpacing.xs),
+                                        ) {
+                                            Text(
+                                                text = state.soundTone,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = SecondaryCyan,
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowDropDown,
+                                                contentDescription = stringResource(R.string.notification_prefs_cd_tone_selector),
+                                                tint = OnSurfaceVariant,
+                                                modifier = Modifier.size(KronoSizes.iconSmall),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -511,6 +594,118 @@ fun NotificationPreferencesScreen(
                         text = stringResource(R.string.notification_prefs_action_reset),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
+                        color = OnSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        if (showToneDialog) {
+            ToneSelectionDialog(
+                selectedTone = state.soundTone,
+                onToneSelected = onSoundToneChange,
+                onDismissRequest = { showToneDialog = false },
+            )
+        }
+    }
+}
+
+/**
+ * Diálogo modal para seleccionar el tono sonoro de las alarmas de concentración (F-15).
+ */
+@Composable
+private fun ToneSelectionDialog(
+    selectedTone: String,
+    onToneSelected: (String) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .glassSurface(cornerRadius = KronoSpacing.lg)
+                .padding(KronoSpacing.lg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(KronoSpacing.md),
+            ) {
+                Text(
+                    text = stringResource(R.string.notification_prefs_dialog_tone_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface,
+                )
+
+                val tones = listOf(
+                    "Chime" to stringResource(R.string.notification_prefs_tone_chime),
+                    "Pulse" to stringResource(R.string.notification_prefs_tone_pulse),
+                    "Campana" to stringResource(R.string.notification_prefs_tone_campana),
+                    "Silencioso" to stringResource(R.string.notification_prefs_tone_silencioso),
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(KronoSpacing.xs),
+                ) {
+                    tones.forEach { (toneId, toneLabel) ->
+                        val isSelected = toneId.equals(selectedTone, ignoreCase = true)
+                        Surface(
+                            shape = RoundedCornerShape(KronoSpacing.sm),
+                            color = if (isSelected) PrimaryMagenta.copy(alpha = 0.15f) else SurfaceContainerLow,
+                            border = BorderStroke(
+                                width = KronoGlass.borderWidth,
+                                color = if (isSelected) PrimaryMagenta else OutlineVariant.copy(alpha = 0.4f),
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = KronoSizes.minTouchTarget)
+                                .clickable(
+                                    role = Role.RadioButton,
+                                    onClick = {
+                                        onToneSelected(toneId)
+                                        onDismissRequest()
+                                    },
+                                ),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = KronoSpacing.md, vertical = KronoSpacing.sm),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = toneLabel,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) PrimaryFixedDim else OnSurface,
+                                )
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = PrimaryFixedDim,
+                                        modifier = Modifier.size(KronoSizes.iconSmall),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TextButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .heightIn(min = KronoSizes.minTouchTarget),
+                ) {
+                    Text(
+                        text = stringResource(R.string.security_dialog_delete_cancel),
                         color = OnSurfaceVariant,
                     )
                 }

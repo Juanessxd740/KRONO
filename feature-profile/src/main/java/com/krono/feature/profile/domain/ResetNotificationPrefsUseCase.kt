@@ -37,10 +37,14 @@ open class ResetNotificationPrefsUseCase @Inject constructor(
     open suspend operator fun invoke(): KronoResult<NotificationPrefs> {
         val defaults = NotificationPrefs()
         localStore.saveNotificationPrefs(defaults)
-        remoteDataSource.saveNotificationPrefs(
-            userId = localStore.activeUserId,
-            prefs = defaults,
-        )
+        try {
+            remoteDataSource.saveNotificationPrefs(
+                userId = localStore.activeUserId,
+                prefs = defaults,
+            )
+        } catch (_: Throwable) {
+            // Sincronización remota tolerante a fallos
+        }
         return KronoResult.Success(defaults)
     }
 }

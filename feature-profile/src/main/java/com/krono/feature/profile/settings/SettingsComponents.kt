@@ -706,3 +706,161 @@ internal fun LogoutConfirmationDialog(
         }
     }
 }
+
+/**
+ * Diálogo informativo con las plantillas predefinidas de concentración de KRONO (F-10 / F-20).
+ *
+ * Muestra los tres presets oficiales del sistema:
+ * 1. Estudio Profundo (45 min concentración / 10 min descanso).
+ * 2. Sprint Rápido (25 min concentración / 5 min descanso).
+ * 3. Lectura Nocturna (60 min concentración / 15 min descanso).
+ *
+ * @param onDismissRequest Acción para cerrar el diálogo.
+ */
+@Composable
+internal fun FocusTemplatesDialog(
+    onDismissRequest: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .glassSurface(cornerRadius = KronoSpacing.lg)
+                .padding(KronoSpacing.lg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(KronoSpacing.md),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(KronoSizes.controlHeight)
+                        .clip(RoundedCornerShape(KronoSpacing.md))
+                        .background(SecondaryCyan.copy(alpha = 0.15f))
+                        .border(KronoGlass.borderWidth, SecondaryCyan.copy(alpha = 0.4f), RoundedCornerShape(KronoSpacing.md)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(KronoIcons.Checklist),
+                        contentDescription = null,
+                        tint = SecondaryCyan,
+                        modifier = Modifier.size(KronoSizes.iconMedium),
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.focus_templates_dialog_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface,
+                    textAlign = TextAlign.Center,
+                )
+
+                Text(
+                    text = stringResource(R.string.focus_templates_dialog_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(KronoSpacing.sm),
+                ) {
+                    FocusTemplateItemCard(
+                        title = stringResource(R.string.focus_template_deep_work_title),
+                        description = stringResource(R.string.focus_template_deep_work_desc),
+                        badge = stringResource(R.string.focus_template_deep_work_badge),
+                    )
+                    FocusTemplateItemCard(
+                        title = stringResource(R.string.focus_template_quick_sprint_title),
+                        description = stringResource(R.string.focus_template_quick_sprint_desc),
+                        badge = stringResource(R.string.focus_template_quick_sprint_badge),
+                    )
+                    FocusTemplateItemCard(
+                        title = stringResource(R.string.focus_template_night_reading_title),
+                        description = stringResource(R.string.focus_template_night_reading_desc),
+                        badge = stringResource(R.string.focus_template_night_reading_badge),
+                    )
+                }
+
+                Spacer(Modifier.height(KronoSpacing.xs))
+
+                Button(
+                    onClick = onDismissRequest,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = KronoSizes.controlHeight),
+                    shape = RoundedCornerShape(KronoSpacing.md),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryMagenta,
+                        contentColor = OnSurface,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.focus_templates_dialog_understood),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FocusTemplateItemCard(
+    title: String,
+    description: String,
+    badge: String,
+) {
+    Surface(
+        shape = RoundedCornerShape(KronoSpacing.md),
+        color = SurfaceContainerLow,
+        border = BorderStroke(KronoGlass.borderWidth, OutlineVariant.copy(alpha = 0.5f)),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = KronoSpacing.md, vertical = KronoSpacing.sm),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(KronoSpacing.xs / 2),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = OnSurface,
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnSurfaceVariant,
+                )
+            }
+            Surface(
+                shape = RoundedCornerShape(KronoSpacing.xs),
+                color = SecondaryCyan.copy(alpha = 0.12f),
+                border = BorderStroke(KronoGlass.borderWidth, SecondaryCyan.copy(alpha = 0.35f)),
+            ) {
+                Text(
+                    text = badge,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = SecondaryCyan,
+                    modifier = Modifier.padding(horizontal = KronoSpacing.sm, vertical = KronoSpacing.xs / 2),
+                )
+            }
+        }
+    }
+}

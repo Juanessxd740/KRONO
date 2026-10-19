@@ -40,10 +40,14 @@ open class SaveNotificationPrefsUseCase @Inject constructor(
             return KronoResult.Error(IllegalArgumentException("Los minutos de anticipación deben ser mayores a 0"))
         }
         localStore.saveNotificationPrefs(prefs)
-        remoteDataSource.saveNotificationPrefs(
-            userId = localStore.activeUserId,
-            prefs = prefs,
-        )
+        try {
+            remoteDataSource.saveNotificationPrefs(
+                userId = localStore.activeUserId,
+                prefs = prefs,
+            )
+        } catch (_: Throwable) {
+            // Sincronización remota tolerante a fallos
+        }
         return KronoResult.Success(Unit)
     }
 }

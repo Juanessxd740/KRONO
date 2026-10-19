@@ -328,5 +328,26 @@ class EditProfileViewModelTest {
         assertEquals("Trabajador tiempo completo", remoteDataSource.lastSavedRole)
         assertEquals("content://media/picker/photo_789", remoteDataSource.lastSavedAvatarUri)
     }
+
+    @Test
+    fun updateProfileToleraFalloRemotoYPersisteLocalmente() = runTest {
+        val store = ProfileLocalStore()
+        val remoteDataSource = object : NoOpProfileRemoteDataSource() {
+            override suspend fun saveUserProfile(
+                userId: String,
+                name: String,
+                role: String,
+                avatarUri: String?,
+            ): KronoResult<Unit> {
+                throw RuntimeException("PERMISSION_DENIED")
+            }
+        }
+        val updateUseCase = UpdateProfileUseCase(store, remoteDataSource)
+        val result = updateUseCase("Carlos Gómez", "Estudiante", null)
+
+        assertTrue("Debe retornar éxito incluso si Firestore falla", result is KronoResult.Success)
+        assertEquals("Carlos Gómez", store.userName.value)
+        assertEquals("Estudiante", store.userRole.value)
+    }
 }
 

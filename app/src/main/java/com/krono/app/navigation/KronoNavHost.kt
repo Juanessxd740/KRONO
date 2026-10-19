@@ -58,6 +58,11 @@ fun KronoApp(viewModel: KronoAppViewModel = hiltViewModel()) {
         grafoAuth = { alAutenticarse -> authGraph(navController, alAutenticarse) },
         ajustes = { alCerrarSesion ->
             SettingsRoute(
+                onBackClick = {
+                    if (!navController.popBackStack()) {
+                        navController.navegarAPestana(KronoDestination.Inicio)
+                    }
+                },
                 onEditProfileClick = { navController.navigateToEditProfile() },
                 onSecurityZoneClick = { navController.navigateToSecurityZone() },
                 onNotificationPrefsClick = { navController.navigateToNotificationPreferences() },

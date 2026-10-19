@@ -93,6 +93,8 @@ fun SettingsScreen(
     onRequestLogout: () -> Unit,
     onDismissLogoutDialog: () -> Unit,
     onConfirmLogout: () -> Unit,
+    showFocusTemplatesDialog: Boolean = false,
+    onDismissFocusTemplatesDialog: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -398,6 +400,13 @@ fun SettingsScreen(
                 state = state,
                 onDismissRequest = onDismissLogoutDialog,
                 onConfirmLogout = onConfirmLogout,
+            )
+        }
+
+        // Diálogo Informativo de Plantillas de Concentración (F-10 / F-20)
+        if (showFocusTemplatesDialog) {
+            FocusTemplatesDialog(
+                onDismissRequest = onDismissFocusTemplatesDialog,
             )
         }
     }

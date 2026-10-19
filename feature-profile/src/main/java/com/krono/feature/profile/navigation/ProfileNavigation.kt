@@ -1,14 +1,20 @@
 package com.krono.feature.profile.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.krono.feature.profile.R
 import com.krono.feature.profile.edit.EditProfileRoute
 import com.krono.feature.profile.notifications.NotificationPreferencesRoute
 import com.krono.feature.profile.security.SecurityZoneRoute
@@ -118,6 +124,8 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showFocusTemplatesDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -134,13 +142,25 @@ fun SettingsRoute(
         onNotificationPrefsClick = onNotificationPrefsClick,
         onDynamicBreaksToggle = viewModel::onDynamicBreaksToggle,
         onSilenceNotificationsToggle = viewModel::onSilenceNotificationsToggle,
-        onFocusTemplatesClick = onFocusTemplatesClick,
+        onFocusTemplatesClick = {
+            showFocusTemplatesDialog = true
+            onFocusTemplatesClick()
+        },
         onPriorityAlertsToggle = viewModel::onPriorityAlertsToggle,
-        onThemeSelectorClick = onThemeSelectorClick,
+        onThemeSelectorClick = {
+            Toast.makeText(
+                context,
+                context.getString(R.string.settings_theme_permanent_notice),
+                Toast.LENGTH_SHORT,
+            ).show()
+            onThemeSelectorClick()
+        },
         onSecurityZoneClick = onSecurityZoneClick,
         onRequestLogout = viewModel::onRequestLogout,
         onDismissLogoutDialog = viewModel::onDismissLogoutDialog,
         onConfirmLogout = viewModel::onConfirmLogout,
+        showFocusTemplatesDialog = showFocusTemplatesDialog,
+        onDismissFocusTemplatesDialog = { showFocusTemplatesDialog = false },
     )
 }
 

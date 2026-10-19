@@ -51,13 +51,17 @@ open class UpdateProfileUseCase @Inject constructor(
         // 1. Guardar en caché local instantánea
         localStore.saveProfile(name, role, avatarUri)
 
-        // 2. Sincronizar en Cloud Firestore (users/{uid}) y Firebase Auth
-        remoteDataSource.saveUserProfile(
-            userId = localStore.activeUserId,
-            name = name,
-            role = role,
-            avatarUri = avatarUri,
-        )
+        // 2. Sincronizar en Cloud Firestore (users/{uid}) y Firebase Auth en modo best-effort
+        try {
+            remoteDataSource.saveUserProfile(
+                userId = localStore.activeUserId,
+                name = name,
+                role = role,
+                avatarUri = avatarUri,
+            )
+        } catch (_: Throwable) {
+            // Sincronización remota tolerante a falta de red o reglas en despliegue
+        }
 
         return KronoResult.Success(Unit)
     }

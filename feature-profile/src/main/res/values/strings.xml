@@ -153,4 +153,31 @@
     <string name="settings_notifications_title">Notificaciones y Alarmas</string>
     <string name="settings_notifications_desc">Configura recordatorios y avisos esenciales</string>
     <string name="settings_cd_open_notifications">Abrir preferencias de notificaciones y alarmas</string>
+
+    <!-- Aviso de Tema Cyber Dark -->
+    <string name="settings_theme_permanent_notice">Lumina Glass: El modo Cyber Dark está activo permanentemente para optimización OLED.</string>
+
+    <!-- Diálogo de Plantillas de Concentración (F-10 / F-20) -->
+    <string name="focus_templates_dialog_title">Plantillas de Concentración</string>
+    <string name="focus_templates_dialog_desc">Presets predefinidos del sistema Lumina Glass para optimizar tus bloques de enfoque y descansos según tu ritmo circadiano:</string>
+    <string name="focus_template_deep_work_title">Estudio Profundo</string>
+    <string name="focus_template_deep_work_desc">45 min concentración • 10 min descanso circadiano</string>
+    <string name="focus_template_deep_work_badge" translatable="false">45/10</string>
+    <string name="focus_template_quick_sprint_title">Sprint Rápido</string>
+    <string name="focus_template_quick_sprint_desc">25 min concentración • 5 min descanso ágil</string>
+    <string name="focus_template_quick_sprint_badge" translatable="false">25/5</string>
+    <string name="focus_template_night_reading_title">Lectura Nocturna</string>
+    <string name="focus_template_night_reading_desc">60 min concentración • 15 min pausa restaurativa</string>
+    <string name="focus_template_night_reading_badge" translatable="false">60/15</string>
+    <string name="focus_templates_dialog_understood">Entendido</string>
+
+    <!-- Selector de tonos de alarma sonora (F-15) -->
+    <string name="notification_prefs_sound_tone_title">Tono de inicio de concentración</string>
+    <string name="notification_prefs_sound_tone_desc">Tono para alertas al iniciar un bloque: %1$s</string>
+    <string name="notification_prefs_dialog_tone_title">Seleccionar Tono de Alarma</string>
+    <string name="notification_prefs_tone_chime">Chime</string>
+    <string name="notification_prefs_tone_pulse">Pulse</string>
+    <string name="notification_prefs_tone_campana">Campana</string>
+    <string name="notification_prefs_tone_silencioso">Silencioso</string>
+    <string name="notification_prefs_cd_tone_selector">Abrir selector de tono sonoro</string>
 </resources>
