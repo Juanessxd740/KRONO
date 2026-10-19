@@ -11,10 +11,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-kotlin {
-    jvmToolchain(17)
-}
-
 dependencies {
     // KronoResult y Flow forman parte de la API pública del dominio (AuthRepository, casos de uso).
     api(project(":core:core-common"))
