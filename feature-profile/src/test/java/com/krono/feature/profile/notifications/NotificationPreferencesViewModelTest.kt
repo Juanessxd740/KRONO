@@ -3,6 +3,7 @@ package com.krono.feature.profile.notifications
 import app.cash.turbine.test
 import com.krono.core.common.KronoResult
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
 import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.NotificationPrefs
 
@@ -232,6 +233,35 @@ class NotificationPreferencesViewModelTest {
         assertEquals(NotificationPrefs.DEFAULT_REMINDER_MINUTES, store.deadlineReminderMinutes.value)
         assertTrue(store.focusStartSound.value)
         assertEquals(NotificationPrefs.DEFAULT_SOUND_TONE, store.soundTone.value)
+    }
+
+    @Test
+    fun guardarPreferenciasSincronizaConRemoteDataSourceYRestablecerSincroniza() = runTest {
+        val store = ProfileLocalStore()
+        store.bindUser("user_777", "carlos@krono.app")
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+        val saveUseCase = SaveNotificationPrefsUseCase(store, remoteDataSource)
+        val resetUseCase = ResetNotificationPrefsUseCase(store, remoteDataSource)
+        val vm = NotificationPreferencesViewModel(saveUseCase, resetUseCase, store)
+
+        vm.onDeadlineReminderMinutesChange(45)
+        vm.onFocusStartSoundChange(false)
+        vm.onSoundToneChange("Discreet")
+
+        vm.onSaveClick()
+        advanceUntilIdle()
+
+        assertEquals(45, remoteDataSource.lastSavedPrefs?.deadlineReminderMinutes)
+        assertFalse(remoteDataSource.lastSavedPrefs?.focusStartSound == true)
+        assertEquals("Discreet", remoteDataSource.lastSavedPrefs?.soundTone)
+
+        // Restablecer
+        vm.onResetToDefaultsClick()
+        advanceUntilIdle()
+
+        assertEquals(NotificationPrefs.DEFAULT_REMINDER_MINUTES, remoteDataSource.lastSavedPrefs?.deadlineReminderMinutes)
+        assertTrue(remoteDataSource.lastSavedPrefs?.focusStartSound == true)
+        assertEquals(NotificationPrefs.DEFAULT_SOUND_TONE, remoteDataSource.lastSavedPrefs?.soundTone)
     }
 }
 

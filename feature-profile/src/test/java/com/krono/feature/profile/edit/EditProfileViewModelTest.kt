@@ -22,6 +22,7 @@ import com.krono.core.domain.auth.AuthRepository
 import com.krono.core.domain.auth.ObserveSessionUseCase
 import com.krono.core.domain.auth.User
 import com.krono.feature.profile.data.NoOpAuthRepository
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -301,6 +302,31 @@ class EditProfileViewModelTest {
         assertEquals("Juan Esteban", state.name)
         assertEquals("juan.esteban@correo.com", state.email)
         assertEquals("JE", state.userInitials)
+    }
+
+    @Test
+    fun guardarPerfilSincronizaConRemoteDataSource() = runTest {
+        val store = ProfileLocalStore()
+        store.bindUser("user_999", "ana.torres@krono.app")
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+        val updateUseCase = UpdateProfileUseCase(store, remoteDataSource)
+        val vm = EditProfileViewModel(updateUseCase, store)
+
+        vm.onNameChange("Ana Torres")
+        vm.onRoleChange("Trabajador tiempo completo")
+        vm.onAvatarSelected("content://media/picker/photo_789")
+
+        vm.events.test {
+            vm.onSave()
+            advanceUntilIdle()
+
+            assertEquals(EditProfileEvent.ProfileSaved, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals("Ana Torres", remoteDataSource.lastSavedName)
+        assertEquals("Trabajador tiempo completo", remoteDataSource.lastSavedRole)
+        assertEquals("content://media/picker/photo_789", remoteDataSource.lastSavedAvatarUri)
     }
 }
 

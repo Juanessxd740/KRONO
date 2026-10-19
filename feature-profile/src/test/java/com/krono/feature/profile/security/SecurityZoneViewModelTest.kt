@@ -2,7 +2,10 @@ package com.krono.feature.profile.security
 
 import app.cash.turbine.test
 import com.krono.core.common.KronoResult
+import com.krono.core.domain.task.Task
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
+import com.krono.feature.profile.data.NoOpTaskRepository
 import com.krono.feature.profile.data.ProfileLocalStore
 import com.krono.feature.profile.domain.DeleteAccountUseCase
 
@@ -307,6 +310,73 @@ class SecurityZoneViewModelTest {
         assertEquals(ProfileLocalStore.DEFAULT_NAME, store.userName.value)
         assertEquals(ProfileLocalStore.DEFAULT_ROLE, store.userRole.value)
         assertTrue(store.dynamicBreaksEnabled.value)
+    }
+
+    @Test
+    fun restablecerDatosEliminaTareasEnTaskRepositoryYSincronizaConRemoteDataSource() = runTest {
+        val store = ProfileLocalStore()
+        store.bindUser("user_abc", "user@krono.app")
+        val initialTasks = listOf(
+            Task(id = "task-1", title = "Tarea 1"),
+            Task(id = "task-2", title = "Tarea 2"),
+        )
+        val taskRepo = NoOpTaskRepository(initialTasks)
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+
+        val resetUseCase = ResetUserDataUseCase(
+            localStore = store,
+            taskRepository = taskRepo,
+            remoteDataSource = remoteDataSource,
+        )
+        val deleteUseCase = DeleteAccountUseCase(
+            localStore = store,
+            taskRepository = taskRepo,
+            remoteDataSource = remoteDataSource,
+        )
+        val vm = SecurityZoneViewModel(resetUseCase, deleteUseCase)
+
+        vm.onSelectAction(SecurityActionType.RESET_DATA)
+        vm.onContinueToConfirmation()
+        vm.onConfirmResetData()
+        advanceUntilIdle()
+
+        assertEquals("Debe haber eliminado las 2 tareas en TaskRepository", 0, taskRepo.tasksFlow.value.size)
+        assertEquals("Debe haber llamado 2 veces a deleteTask", 2, taskRepo.deleteCalls)
+        assertTrue("Debe invocar resetUserData en remoteDataSource", remoteDataSource.resetUserDataCalled)
+    }
+
+    @Test
+    fun eliminarCuentaEliminaTareasEnTaskRepositoryYSincronizaConRemoteDataSource() = runTest {
+        val store = ProfileLocalStore()
+        store.bindUser("user_abc", "user@krono.app")
+        val initialTasks = listOf(
+            Task(id = "task-1", title = "Tarea 1"),
+        )
+        val taskRepo = NoOpTaskRepository(initialTasks)
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+
+        val resetUseCase = ResetUserDataUseCase(
+            localStore = store,
+            taskRepository = taskRepo,
+            remoteDataSource = remoteDataSource,
+        )
+        val deleteUseCase = DeleteAccountUseCase(
+            localStore = store,
+            taskRepository = taskRepo,
+            remoteDataSource = remoteDataSource,
+        )
+        val vm = SecurityZoneViewModel(resetUseCase, deleteUseCase)
+
+        vm.onSelectAction(SecurityActionType.DELETE_ACCOUNT)
+        vm.onContinueToConfirmation()
+        vm.onReauthPasswordChange("Password123*")
+        vm.onConfirmDeleteAccount()
+        advanceUntilIdle()
+
+        assertEquals("Debe haber eliminado la tarea", 0, taskRepo.tasksFlow.value.size)
+        assertEquals(1, taskRepo.deleteCalls)
+        assertTrue("Debe invocar deleteAccount en remoteDataSource", remoteDataSource.deleteAccountCalled)
+        assertEquals("Password123*", remoteDataSource.lastDeletePassword)
     }
 }
 

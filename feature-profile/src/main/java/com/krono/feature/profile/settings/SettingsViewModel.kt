@@ -7,7 +7,9 @@ import com.krono.core.domain.auth.AuthError
 import com.krono.core.domain.auth.LogoutUseCase
 import com.krono.core.domain.auth.ObserveSessionUseCase
 import com.krono.feature.profile.data.NoOpAuthRepository
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
 import com.krono.feature.profile.data.ProfileLocalStore
+import com.krono.feature.profile.data.ProfileRemoteDataSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -40,13 +42,26 @@ sealed interface SettingsEvent {
  * @property logout Caso de uso oficial de dominio para cerrar la sesión activa.
  * @property observeSession Caso de uso para observar la identidad del usuario autenticado en Firebase.
  * @property localStore Almacén local persistente para reactividad y persistencia entre reinicios.
+ * @property remoteDataSource Fuente remota para sincronizar configuraciones en Cloud Firestore (`users/{uid}`).
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val logout: LogoutUseCase,
     private val observeSession: ObserveSessionUseCase,
     private val localStore: ProfileLocalStore,
+    private val remoteDataSource: ProfileRemoteDataSource,
 ) : ViewModel() {
+
+    constructor(
+        logout: LogoutUseCase,
+        observeSession: ObserveSessionUseCase,
+        localStore: ProfileLocalStore,
+    ) : this(
+        logout = logout,
+        observeSession = observeSession,
+        localStore = localStore,
+        remoteDataSource = NoOpProfileRemoteDataSource(),
+    )
 
     constructor(
         logout: LogoutUseCase,
@@ -55,6 +70,7 @@ class SettingsViewModel @Inject constructor(
         logout = logout,
         observeSession = observeSession,
         localStore = ProfileLocalStore(),
+        remoteDataSource = NoOpProfileRemoteDataSource(),
     )
 
     constructor(
@@ -64,12 +80,14 @@ class SettingsViewModel @Inject constructor(
         logout = logout,
         observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
         localStore = localStore,
+        remoteDataSource = NoOpProfileRemoteDataSource(),
     )
 
     constructor(logout: LogoutUseCase) : this(
         logout = logout,
         observeSession = ObserveSessionUseCase(NoOpAuthRepository()),
         localStore = ProfileLocalStore(),
+        remoteDataSource = NoOpProfileRemoteDataSource(),
     )
 
     private val _uiState = MutableStateFlow(
@@ -150,6 +168,7 @@ class SettingsViewModel @Inject constructor(
     fun onDynamicBreaksToggle(enabled: Boolean) {
         localStore.setDynamicBreaksEnabled(enabled)
         _uiState.update { it.copy(dynamicBreaksEnabled = enabled) }
+        syncSettingsToggles()
     }
 
     /**
@@ -160,6 +179,7 @@ class SettingsViewModel @Inject constructor(
     fun onSilenceNotificationsToggle(enabled: Boolean) {
         localStore.setSilenceInternalNotificationsEnabled(enabled)
         _uiState.update { it.copy(silenceInternalNotificationsEnabled = enabled) }
+        syncSettingsToggles()
     }
 
     /**
@@ -170,6 +190,18 @@ class SettingsViewModel @Inject constructor(
     fun onPriorityAlertsToggle(enabled: Boolean) {
         localStore.setPriorityAlertsEnabled(enabled)
         _uiState.update { it.copy(priorityAlertsEnabled = enabled) }
+        syncSettingsToggles()
+    }
+
+    private fun syncSettingsToggles() {
+        viewModelScope.launch {
+            remoteDataSource.saveSettingsToggles(
+                userId = localStore.activeUserId,
+                dynamicBreaks = localStore.dynamicBreaksEnabled.value,
+                silenceNotifications = localStore.silenceInternalNotificationsEnabled.value,
+                priorityAlerts = localStore.priorityAlertsEnabled.value,
+            )
+        }
     }
 
     /**

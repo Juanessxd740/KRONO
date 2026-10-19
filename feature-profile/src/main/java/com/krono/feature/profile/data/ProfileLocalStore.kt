@@ -33,6 +33,7 @@ class ProfileLocalStore internal constructor(
     constructor() : this(null as SharedPreferences?)
 
     private var currentUserId: String = ""
+    val activeUserId: String get() = currentUserId
 
     // Datos de perfil (F-19)
     private val _userName = MutableStateFlow(loadString(userKey(KEY_USER_NAME), DEFAULT_NAME))

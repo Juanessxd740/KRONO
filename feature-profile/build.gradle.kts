@@ -21,6 +21,7 @@ android {
     }
 
     kotlinOptions { jvmTarget = "17" }
+    testOptions { unitTests.isReturnDefaultValues = true }
 }
 
 dependencies {
@@ -28,6 +29,11 @@ dependencies {
     implementation(project(":core:core-common"))
     implementation(project(":core:core-domain"))
     implementation(project(":core:core-ui"))
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation("androidx.lifecycle:lifecycle-runtime-compose:${libs.versions.lifecycle.get()}")

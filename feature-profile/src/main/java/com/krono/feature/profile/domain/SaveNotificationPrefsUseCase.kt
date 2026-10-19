@@ -1,7 +1,9 @@
 package com.krono.feature.profile.domain
 
 import com.krono.core.common.KronoResult
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
 import com.krono.feature.profile.data.ProfileLocalStore
+import com.krono.feature.profile.data.ProfileRemoteDataSource
 import javax.inject.Inject
 
 /**
@@ -9,13 +11,22 @@ import javax.inject.Inject
  * las preferencias de notificaciones y alarmas (F-15 CA-2).
  *
  * Cumple con el aislamiento de arquitectura (D-8) y maneja errores retornando [KronoResult],
- * evitando que excepciones no controladas crucen hacia la capa de presentación.
+ * sincronizando cambios tanto en el almacén local como en Cloud Firestore (`users/{uid}`).
  */
 open class SaveNotificationPrefsUseCase @Inject constructor(
     private val localStore: ProfileLocalStore,
+    private val remoteDataSource: ProfileRemoteDataSource,
 ) {
 
-    constructor() : this(ProfileLocalStore())
+    constructor(localStore: ProfileLocalStore) : this(
+        localStore = localStore,
+        remoteDataSource = NoOpProfileRemoteDataSource(),
+    )
+
+    constructor() : this(
+        localStore = ProfileLocalStore(),
+        remoteDataSource = NoOpProfileRemoteDataSource(),
+    )
 
     /**
      * Valida y guarda las preferencias de notificación provistas.
@@ -29,6 +40,10 @@ open class SaveNotificationPrefsUseCase @Inject constructor(
             return KronoResult.Error(IllegalArgumentException("Los minutos de anticipación deben ser mayores a 0"))
         }
         localStore.saveNotificationPrefs(prefs)
+        remoteDataSource.saveNotificationPrefs(
+            userId = localStore.activeUserId,
+            prefs = prefs,
+        )
         return KronoResult.Success(Unit)
     }
 }

@@ -7,6 +7,7 @@ import com.krono.core.domain.auth.AuthRepository
 import com.krono.core.domain.auth.LogoutUseCase
 import com.krono.core.domain.auth.User
 import com.krono.feature.profile.MainDispatcherRule
+import com.krono.feature.profile.data.NoOpProfileRemoteDataSource
 import com.krono.feature.profile.data.ProfileLocalStore
 
 import kotlinx.coroutines.CompletableDeferred
@@ -290,6 +291,28 @@ class SettingsViewModelTest {
 
         val state = vm.uiState.value
         assertEquals("content://media/picker/photo123", state.avatarUri)
+    }
+
+    @Test
+    fun alternarInterruptoresSincronizaConRemoteDataSource() = runTest {
+        val store = ProfileLocalStore()
+        store.bindUser("user_sync_test", "sync@krono.app")
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+        val vm = SettingsViewModel(
+            logout = LogoutUseCase(authRepository),
+            observeSession = ObserveSessionUseCase(authRepository),
+            localStore = store,
+            remoteDataSource = remoteDataSource,
+        )
+
+        vm.onDynamicBreaksToggle(false)
+        vm.onSilenceNotificationsToggle(false)
+        vm.onPriorityAlertsToggle(false)
+        advanceUntilIdle()
+
+        assertFalse(store.dynamicBreaksEnabled.value)
+        assertFalse(store.silenceInternalNotificationsEnabled.value)
+        assertFalse(store.priorityAlertsEnabled.value)
     }
 }
 
