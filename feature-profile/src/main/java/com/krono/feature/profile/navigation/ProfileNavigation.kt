@@ -5,7 +5,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.krono.feature.profile.edit.EditProfileRoute
 import com.krono.feature.profile.notifications.NotificationPreferencesRoute
@@ -33,6 +35,34 @@ const val SECURITY_ZONE_ROUTE = "profile/security"
  * Ruta canónica de la pantalla de Preferencias de Notificaciones y Alarmas (F-15).
  */
 const val NOTIFICATION_PREFS_ROUTE = "profile/notifications"
+
+/**
+ * Navega hacia la pantalla de Ajustes y Perfil (F-19, F-20).
+ */
+fun NavController.navigateToSettings(navOptions: NavOptions? = null) {
+    navigate(SETTINGS_ROUTE, navOptions)
+}
+
+/**
+ * Navega hacia la pantalla de Edición de Perfil (F-19 CA-2).
+ */
+fun NavController.navigateToEditProfile(navOptions: NavOptions? = null) {
+    navigate(EDIT_PROFILE_ROUTE, navOptions)
+}
+
+/**
+ * Navega hacia la pantalla de Zona de Seguridad y purga de datos (F-21).
+ */
+fun NavController.navigateToSecurityZone(navOptions: NavOptions? = null) {
+    navigate(SECURITY_ZONE_ROUTE, navOptions)
+}
+
+/**
+ * Navega hacia la pantalla de Preferencias de Notificaciones y Alarmas (F-15).
+ */
+fun NavController.navigateToNotificationPreferences(navOptions: NavOptions? = null) {
+    navigate(NOTIFICATION_PREFS_ROUTE, navOptions)
+}
 
 /**
  * Contrato de navegación de `feature-profile`.
@@ -77,14 +107,14 @@ fun NavGraphBuilder.settingsScreen(
  * escucha los eventos de un solo uso (como [SettingsEvent.LoggedOut]).
  */
 @Composable
-internal fun SettingsRoute(
-    onBackClick: () -> Unit,
-    onEditProfileClick: () -> Unit,
-    onFocusTemplatesClick: () -> Unit,
-    onSecurityZoneClick: () -> Unit,
-    onNotificationPrefsClick: () -> Unit,
+fun SettingsRoute(
+    onBackClick: () -> Unit = {},
+    onEditProfileClick: () -> Unit = {},
+    onFocusTemplatesClick: () -> Unit = {},
+    onSecurityZoneClick: () -> Unit = {},
+    onNotificationPrefsClick: () -> Unit = {},
     onLoggedOut: () -> Unit,
-    onThemeSelectorClick: () -> Unit,
+    onThemeSelectorClick: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
