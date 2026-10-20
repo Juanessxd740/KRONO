@@ -15,6 +15,10 @@ import javax.inject.Singleton
 /**
  * Implementación de [ProfileRemoteDataSource] respaldada por Cloud Firestore y Firebase Auth (D-1, D-3, F-21).
  * Opera bajo el documento raíz `users/{userId}` según la Sección 6 de `SPEC.md`.
+ *
+ * Reside en `:feature-profile/data` para respetar el aislamiento estricto de módulos (decisión D-8),
+ * evitando modificaciones invasivas en `:core:core-data`.
+ *
  * Maneja de forma tolerante a fallos la ausencia de Firebase durante pruebas JVM locales.
  */
 @Singleton
@@ -43,13 +47,21 @@ class FirestoreProfileDataSource(
         role: String,
         avatarUri: String?,
     ): KronoResult<Unit> = runCatchingSafe {
+        val trimmedName = name.trim()
+        val trimmedRole = role.trim()
+        val firstName = trimmedName.substringBefore(' ')
+        val lastName = trimmedName.substringAfter(' ', "").trim()
+        val currentUserEmail = authProvider()?.currentUser?.email.orEmpty()
+
         val targetUid = userId.ifBlank { authProvider()?.currentUser?.uid.orEmpty() }
         if (targetUid.isNotBlank()) {
             val firestore = firestoreProvider()
             if (firestore != null) {
                 val data = mutableMapOf<String, Any?>(
-                    FIELD_NAME to name,
-                    FIELD_ROLE to role,
+                    FIELD_NAME to firstName,
+                    FIELD_LAST_NAME to lastName,
+                    FIELD_EMAIL to currentUserEmail,
+                    FIELD_ROLE to trimmedRole,
                     FIELD_AVATAR_URI to avatarUri,
                     FIELD_UPDATED_AT to FieldValue.serverTimestamp(),
                 )
@@ -63,9 +75,9 @@ class FirestoreProfileDataSource(
         // Actualizar displayName en Firebase Authentication
         val auth = authProvider()
         val user = auth?.currentUser
-        if (user != null && name.isNotBlank()) {
+        if (user != null && trimmedName.isNotBlank()) {
             val updateRequest = UserProfileChangeRequest.Builder()
-                .setDisplayName(name)
+                .setDisplayName(trimmedName)
                 .build()
             user.updateProfile(updateRequest).await()
         }
@@ -123,8 +135,11 @@ class FirestoreProfileDataSource(
         if (targetUid.isNotBlank()) {
             val firestore = firestoreProvider()
             if (firestore != null) {
+                val currentUserEmail = authProvider()?.currentUser?.email.orEmpty()
                 val defaults = mapOf<String, Any?>(
                     FIELD_NAME to DEFAULT_NAME,
+                    FIELD_LAST_NAME to "",
+                    FIELD_EMAIL to currentUserEmail,
                     FIELD_ROLE to DEFAULT_ROLE,
                     FIELD_AVATAR_URI to null,
                     FIELD_DEADLINE_MINUTES to NotificationPrefs.DEFAULT_REMINDER_MINUTES,
@@ -165,6 +180,68 @@ class FirestoreProfileDataSource(
         user.delete().await()
     }
 
+    override suspend fun syncFromRemote(
+        userId: String,
+        localStore: ProfileLocalStore,
+    ): KronoResult<Unit> = runCatchingSafe {
+        val targetUid = userId.ifBlank { authProvider()?.currentUser?.uid.orEmpty() }
+        if (targetUid.isBlank()) return@runCatchingSafe
+        val firestore = firestoreProvider() ?: return@runCatchingSafe
+
+        val snapshot = firestore.collection(COLLECTION_USERS)
+            .document(targetUid)
+            .get()
+            .await()
+
+        if (snapshot.exists()) {
+            val remoteName = snapshot.getString(FIELD_NAME).orEmpty()
+            val remoteLastName = snapshot.getString(FIELD_LAST_NAME).orEmpty()
+            val fullName = if (remoteLastName.isNotBlank()) {
+                "$remoteName $remoteLastName".trim()
+            } else {
+                remoteName
+            }
+            val role = snapshot.getString(FIELD_ROLE)
+            val avatarUri = snapshot.getString(FIELD_AVATAR_URI)
+
+            if (fullName.isNotBlank() || !role.isNullOrBlank()) {
+                localStore.saveProfile(
+                    name = fullName.ifBlank { localStore.userName.value },
+                    role = role ?: localStore.userRole.value,
+                    avatarUri = avatarUri ?: localStore.avatarUri.value,
+                )
+            }
+
+            val dynamicBreaks = snapshot.getBoolean(FIELD_DYNAMIC_BREAKS)
+            if (dynamicBreaks != null) {
+                localStore.setDynamicBreaksEnabled(dynamicBreaks)
+            }
+            val silenceNotifs = snapshot.getBoolean(FIELD_SILENCE_NOTIFS)
+            if (silenceNotifs != null) {
+                localStore.setSilenceInternalNotificationsEnabled(silenceNotifs)
+            }
+            val priorityAlerts = snapshot.getBoolean(FIELD_PRIORITY_ALERTS)
+            if (priorityAlerts != null) {
+                localStore.setPriorityAlertsEnabled(priorityAlerts)
+            }
+
+            val deadlineMinutes = snapshot.getLong(FIELD_DEADLINE_MINUTES)?.toInt()
+            val deadlineEnabled = snapshot.getBoolean(FIELD_DEADLINE_ENABLED)
+            val focusSound = snapshot.getBoolean(FIELD_FOCUS_SOUND)
+            val soundTone = snapshot.getString(FIELD_SOUND_TONE)
+
+            val currentPrefs = localStore.getNotificationPrefs()
+            localStore.saveNotificationPrefs(
+                currentPrefs.copy(
+                    deadlineReminderMinutes = deadlineMinutes ?: currentPrefs.deadlineReminderMinutes,
+                    deadlineRemindersEnabled = deadlineEnabled ?: currentPrefs.deadlineRemindersEnabled,
+                    focusStartSound = focusSound ?: currentPrefs.focusStartSound,
+                    soundTone = soundTone ?: currentPrefs.soundTone,
+                ),
+            )
+        }
+    }
+
     private suspend fun runCatchingSafe(block: suspend () -> Unit): KronoResult<Unit> {
         return try {
             block()
@@ -178,6 +255,8 @@ class FirestoreProfileDataSource(
         private const val COLLECTION_USERS = "users"
 
         private const val FIELD_NAME = "name"
+        private const val FIELD_LAST_NAME = "lastName"
+        private const val FIELD_EMAIL = "email"
         private const val FIELD_ROLE = "role"
         private const val FIELD_AVATAR_URI = "avatarUri"
         private const val FIELD_DEADLINE_MINUTES = "deadlineReminderMinutes"

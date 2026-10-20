@@ -116,6 +116,7 @@ class SettingsViewModel @Inject constructor(
             observeSession().collect { user ->
                 if (user != null) {
                     localStore.bindUser(user.id, user.email)
+                    remoteDataSource.syncFromRemote(user.id, localStore)
                 }
             }
         }

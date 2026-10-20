@@ -14,6 +14,8 @@ open class NoOpProfileRemoteDataSource : ProfileRemoteDataSource {
     var resetUserDataCalled = false
     var deleteAccountCalled = false
     var lastDeletePassword: String? = null
+    var syncFromRemoteCalled = false
+    var lastSyncUserId: String? = null
     var shouldFail: Throwable? = null
 
     override suspend fun saveUserProfile(
@@ -58,6 +60,16 @@ open class NoOpProfileRemoteDataSource : ProfileRemoteDataSource {
         shouldFail?.let { return KronoResult.Error(it) }
         deleteAccountCalled = true
         lastDeletePassword = password
+        return KronoResult.Success(Unit)
+    }
+
+    override suspend fun syncFromRemote(
+        userId: String,
+        localStore: ProfileLocalStore,
+    ): KronoResult<Unit> {
+        shouldFail?.let { return KronoResult.Error(it) }
+        syncFromRemoteCalled = true
+        lastSyncUserId = userId
         return KronoResult.Success(Unit)
     }
 }

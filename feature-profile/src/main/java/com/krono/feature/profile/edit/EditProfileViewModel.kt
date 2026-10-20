@@ -79,22 +79,27 @@ class EditProfileViewModel @Inject constructor(
     /** Canal de eventos de un solo uso para navegación desacoplada. */
     val events: Flow<EditProfileEvent> = _events.receiveAsFlow()
 
+    private var isInitializedForUser: String? = null
+
     init {
         viewModelScope.launch {
             observeSession().collect { user ->
                 if (user != null) {
                     localStore.bindUser(user.id, user.email)
-                    _uiState.update { current ->
-                        current.copy(
-                            email = user.email,
-                            name = if (current.name.isBlank() || current.name == ProfileLocalStore.DEFAULT_NAME) {
-                                localStore.userName.value
-                            } else {
-                                current.name
-                            },
-                            role = if (current.role.isBlank()) localStore.userRole.value else current.role,
-                            avatarUri = current.avatarUri ?: localStore.avatarUri.value,
-                        )
+                    if (isInitializedForUser != user.id) {
+                        isInitializedForUser = user.id
+                        _uiState.update { current ->
+                            current.copy(
+                                email = user.email,
+                                name = if (current.name.isBlank() || current.name == ProfileLocalStore.DEFAULT_NAME) {
+                                    localStore.userName.value
+                                } else {
+                                    current.name
+                                },
+                                role = if (current.role.isBlank()) localStore.userRole.value else current.role,
+                                avatarUri = current.avatarUri ?: localStore.avatarUri.value,
+                            )
+                        }
                     }
                 }
             }
@@ -162,8 +167,11 @@ class EditProfileViewModel @Inject constructor(
         // Protección contra pulsaciones repetidas o concurrentes
         if (currentState.isSaving) return
 
+        val trimmedName = currentState.name.trim()
+        val trimmedRole = currentState.role.trim()
+
         // Validación de campo obligatorio
-        if (currentState.name.isBlank()) {
+        if (trimmedName.isBlank()) {
             _uiState.update { it.copy(nameError = "El nombre completo es obligatorio") }
             return
         }
@@ -171,13 +179,15 @@ class EditProfileViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isSaving = true,
+                name = trimmedName,
+                role = trimmedRole,
                 nameError = null,
                 errorMessage = null,
             )
         }
 
         viewModelScope.launch {
-            when (val result = updateProfile(currentState.name, currentState.role, currentState.avatarUri)) {
+            when (val result = updateProfile(trimmedName, trimmedRole, currentState.avatarUri)) {
                 is KronoResult.Success -> {
                     _uiState.update {
                         it.copy(

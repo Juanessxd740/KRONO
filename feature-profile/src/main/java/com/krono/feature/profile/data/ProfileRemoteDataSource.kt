@@ -48,4 +48,13 @@ interface ProfileRemoteDataSource {
      * y da de baja la cuenta en Firebase Authentication (F-21 CA-2).
      */
     suspend fun deleteAccount(password: String): KronoResult<Unit>
+
+    /**
+     * Sincroniza bidireccionalmente los datos del documento remoto `users/{userId}` en Cloud Firestore
+     * hacia el almacén local [localStore] (perfil, interruptores de ajustes y preferencias de notificación).
+     */
+    suspend fun syncFromRemote(
+        userId: String,
+        localStore: ProfileLocalStore,
+    ): KronoResult<Unit>
 }

@@ -349,5 +349,55 @@ class EditProfileViewModelTest {
         assertEquals("Carlos Gómez", store.userName.value)
         assertEquals("Estudiante", store.userRole.value)
     }
+
+    @Test
+    fun guardarPerfilAplicaTrimANombreYRolAntesDeGuardar() = runTest {
+        val store = ProfileLocalStore()
+        val updateUseCase = UpdateProfileUseCase(store)
+        val vm = EditProfileViewModel(updateUseCase, store)
+
+        vm.onNameChange("   Carlos Sánchez   ")
+        vm.onRoleChange("   Ingeniero de Software   ")
+
+        vm.events.test {
+            vm.onSave()
+            advanceUntilIdle()
+
+            assertEquals(EditProfileEvent.ProfileSaved, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals("Carlos Sánchez", store.userName.value)
+        assertEquals("Ingeniero de Software", store.userRole.value)
+        assertEquals("Carlos Sánchez", vm.uiState.value.name)
+        assertEquals("Ingeniero de Software", vm.uiState.value.role)
+    }
+
+    @Test
+    fun reemisionDeMismoUsuarioEnObserveSessionNoPisaEdicionEnProgreso() = runTest {
+        val sessionFlow = MutableStateFlow<User?>(null)
+        val authRepo = object : AuthRepository by NoOpAuthRepository() {
+            override fun observeSession(): Flow<User?> = sessionFlow
+        }
+        val store = ProfileLocalStore()
+        val observeSession = ObserveSessionUseCase(authRepo)
+        val vm = EditProfileViewModel(updateProfileUseCase, observeSession, store)
+
+        // 1. Primera emisión: inicializa datos para el usuario
+        sessionFlow.value = User(id = "user_456", email = "juan.esteban@correo.com")
+        advanceUntilIdle()
+        assertEquals("Juan Esteban", vm.uiState.value.name)
+
+        // 2. El usuario modifica el campo en el formulario
+        vm.onNameChange("Juan Esteban Modificado")
+        assertEquals("Juan Esteban Modificado", vm.uiState.value.name)
+
+        // 3. Re-emisión del mismo usuario (ej. refresh de token)
+        sessionFlow.value = User(id = "user_456", email = "juan.esteban@correo.com")
+        advanceUntilIdle()
+
+        // 4. Se comprueba que NO se pisa la edición en curso
+        assertEquals("Juan Esteban Modificado", vm.uiState.value.name)
+    }
 }
 

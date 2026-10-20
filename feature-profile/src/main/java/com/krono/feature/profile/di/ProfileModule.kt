@@ -10,6 +10,10 @@ import javax.inject.Singleton
 
 /**
  * Módulo de inyección de dependencias para el módulo `:feature-profile`.
+ *
+ * Vincula [ProfileRemoteDataSource] con [FirestoreProfileDataSource], residiendo en
+ * `:feature-profile` para mantener el aislamiento estricto de módulos definido en la
+ * decisión D-8 sin alterar `:core:core-data`.
  */
 @Module
 @InstallIn(SingletonComponent::class)

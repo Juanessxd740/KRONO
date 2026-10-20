@@ -42,21 +42,23 @@ open class UpdateProfileUseCase @Inject constructor(
         role: String,
         avatarUri: String? = null,
     ): KronoResult<Unit> {
-        if (name.isBlank()) {
+        val trimmedName = name.trim()
+        val trimmedRole = role.trim()
+        if (trimmedName.isBlank()) {
             return KronoResult.Error(IllegalArgumentException("El nombre no puede estar vacío"))
         }
-        if (role.isBlank()) {
+        if (trimmedRole.isBlank()) {
             return KronoResult.Error(IllegalArgumentException("El rol no puede estar vacío"))
         }
         // 1. Guardar en caché local instantánea
-        localStore.saveProfile(name, role, avatarUri)
+        localStore.saveProfile(trimmedName, trimmedRole, avatarUri)
 
         // 2. Sincronizar en Cloud Firestore (users/{uid}) y Firebase Auth en modo best-effort
         try {
             remoteDataSource.saveUserProfile(
                 userId = localStore.activeUserId,
-                name = name,
-                role = role,
+                name = trimmedName,
+                role = trimmedRole,
                 avatarUri = avatarUri,
             )
         } catch (_: Throwable) {

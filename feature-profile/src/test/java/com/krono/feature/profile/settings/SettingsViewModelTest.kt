@@ -314,5 +314,23 @@ class SettingsViewModelTest {
         assertFalse(store.silenceInternalNotificationsEnabled.value)
         assertFalse(store.priorityAlertsEnabled.value)
     }
+
+    @Test
+    fun sesionDeUsuarioAutenticadoInvocaSyncFromRemoteEnSettings() = runTest {
+        val store = ProfileLocalStore()
+        val remoteDataSource = NoOpProfileRemoteDataSource()
+        val vm = SettingsViewModel(
+            logout = LogoutUseCase(authRepository),
+            observeSession = ObserveSessionUseCase(authRepository),
+            localStore = store,
+            remoteDataSource = remoteDataSource,
+        )
+
+        authRepository.sessionFlow.value = User(id = "user_remote_sync_456", email = "test@krono.app")
+        advanceUntilIdle()
+
+        assertTrue(remoteDataSource.syncFromRemoteCalled)
+        assertEquals("user_remote_sync_456", remoteDataSource.lastSyncUserId)
+    }
 }
 

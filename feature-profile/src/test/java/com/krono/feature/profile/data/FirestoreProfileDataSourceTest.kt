@@ -82,4 +82,16 @@ class FirestoreProfileDataSourceTest {
         val result = dataSource.deleteAccount("password123")
         assertTrue(result is KronoResult.Success)
     }
+
+    @Test
+    fun syncFromRemote_conFirebaseNulo_noLanzaExcepcionYRetornaExito() = runTest {
+        val dataSource = FirestoreProfileDataSource(
+            firestoreProvider = { null },
+            authProvider = { null },
+        )
+        val store = ProfileLocalStore()
+
+        val result = dataSource.syncFromRemote("user-123", store)
+        assertTrue(result is KronoResult.Success)
+    }
 }
