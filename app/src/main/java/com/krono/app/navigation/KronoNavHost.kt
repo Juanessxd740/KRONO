@@ -24,6 +24,13 @@ import com.krono.app.R
 import com.krono.core.ui.theme.DeepMidnight
 import com.krono.feature.auth.navigation.AUTH_GRAPH_ROUTE
 import com.krono.feature.auth.navigation.authGraph
+import com.krono.feature.profile.navigation.SettingsRoute
+import com.krono.feature.profile.navigation.editProfileScreen
+import com.krono.feature.profile.navigation.navigateToEditProfile
+import com.krono.feature.profile.navigation.navigateToNotificationPreferences
+import com.krono.feature.profile.navigation.navigateToSecurityZone
+import com.krono.feature.profile.navigation.notificationPreferencesScreen
+import com.krono.feature.profile.navigation.securityZoneScreen
 import com.krono.feature.tasks.navigation.createTaskScreen
 import com.krono.feature.tasks.navigation.editTaskScreen
 import com.krono.feature.tasks.navigation.navigateToCreateTask
@@ -49,7 +56,19 @@ fun KronoApp(viewModel: KronoAppViewModel = hiltViewModel()) {
         navController = navController,
         destinoInicial = if (inicio == StartDestination.Home) RUTA_GRAFO_PRINCIPAL else AUTH_GRAPH_ROUTE,
         grafoAuth = { alAutenticarse -> authGraph(navController, alAutenticarse) },
-        ajustes = { alCerrarSesion -> AjustesRoute(alCerrarSesion) },
+        ajustes = { alCerrarSesion ->
+            SettingsRoute(
+                onBackClick = {
+                    if (!navController.popBackStack()) {
+                        navController.navegarAPestana(KronoDestination.Inicio)
+                    }
+                },
+                onEditProfileClick = { navController.navigateToEditProfile() },
+                onSecurityZoneClick = { navController.navigateToSecurityZone() },
+                onNotificationPrefsClick = { navController.navigateToNotificationPreferences() },
+                onLoggedOut = alCerrarSesion,
+            )
+        },
         tareas = {
             TasksRoute(
                 onAddTask = { navController.navigateToCreateTask() },
@@ -108,6 +127,10 @@ fun KronoShell(
                 alVolverDeDetalleTarea = { navController.popBackStack() },
                 alEditarDesdeDetalle = { taskId -> navController.navigateToEditTask(taskId) },
                 alIniciarEnfoqueDesdeDetalle = { /* Navegación a F-09 */ },
+                alVolverDeEditarPerfil = { navController.popBackStack() },
+                alVolverDeZonaSeguridad = { navController.popBackStack() },
+                alVolverDeNotificaciones = { navController.popBackStack() },
+                alEliminarCuenta = { navController.volverAAutenticacion() },
             )
         }
     }
@@ -122,6 +145,10 @@ private fun NavGraphBuilder.grafoPrincipal(
     alVolverDeDetalleTarea: () -> Unit = {},
     alEditarDesdeDetalle: (String) -> Unit = {},
     alIniciarEnfoqueDesdeDetalle: (String) -> Unit = {},
+    alVolverDeEditarPerfil: () -> Unit = {},
+    alVolverDeZonaSeguridad: () -> Unit = {},
+    alVolverDeNotificaciones: () -> Unit = {},
+    alEliminarCuenta: () -> Unit = {},
 ) {
     navigation(startDestination = KronoDestination.Inicial.route, route = RUTA_GRAFO_PRINCIPAL) {
         // Cada pantalla provisional se reemplaza por el grafo que exponga su feature
@@ -137,6 +164,17 @@ private fun NavGraphBuilder.grafoPrincipal(
         editTaskScreen(onBack = alVolverDeEditarTarea)
         composable(KronoDestination.Calendario.route) { SeccionProvisional(R.string.seccion_calendario) }
         composable(KronoDestination.Ajustes.route) { ajustes() }
+        editProfileScreen(
+            onBackClick = alVolverDeEditarPerfil,
+            onProfileSaved = alVolverDeEditarPerfil,
+        )
+        securityZoneScreen(
+            onBackClick = alVolverDeZonaSeguridad,
+            onAccountDeleted = alEliminarCuenta,
+        )
+        notificationPreferencesScreen(
+            onBackClick = alVolverDeNotificaciones,
+        )
     }
 }
 
