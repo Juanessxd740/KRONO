@@ -29,6 +29,9 @@ class FirestoreProfileDataSource(
     private val authProvider: () -> FirebaseAuth? = {
         try { FirebaseAuth.getInstance() } catch (_: Throwable) { null }
     },
+    private val serverTimestampProvider: () -> Any = {
+        FieldValue.serverTimestamp()
+    },
 ) : ProfileRemoteDataSource {
 
     @Inject
@@ -39,7 +42,42 @@ class FirestoreProfileDataSource(
         authProvider = {
             try { FirebaseAuth.getInstance() } catch (_: Throwable) { null }
         },
+        serverTimestampProvider = {
+            FieldValue.serverTimestamp()
+        },
     )
+
+    /**
+     * Construye la estructura de datos inicial con todos los valores por defecto del usuario (F-21, D-1).
+     */
+    internal fun createBootstrapPayload(
+        email: String,
+        displayName: String? = null,
+        existingName: String? = null,
+        existingLastName: String? = null,
+        existingRole: String? = null,
+    ): Map<String, Any?> {
+        val baseName = displayName?.trim().takeIf { !it.isNullOrBlank() }
+            ?: ProfileLocalStore.formatNameFromEmail(email).ifBlank { DEFAULT_NAME }
+        val firstName = baseName.substringBefore(' ')
+        val lastName = baseName.substringAfter(' ', "").trim()
+
+        return mapOf(
+            FIELD_NAME to (existingName?.takeIf { it.isNotBlank() } ?: firstName),
+            FIELD_LAST_NAME to (existingLastName?.takeIf { it.isNotBlank() } ?: lastName),
+            FIELD_EMAIL to email,
+            FIELD_ROLE to (existingRole?.takeIf { it.isNotBlank() } ?: DEFAULT_ROLE),
+            FIELD_AVATAR_URI to null,
+            FIELD_DEADLINE_MINUTES to NotificationPrefs.DEFAULT_REMINDER_MINUTES,
+            FIELD_FOCUS_SOUND to true,
+            FIELD_SOUND_TONE to NotificationPrefs.DEFAULT_SOUND_TONE,
+            FIELD_DEADLINE_ENABLED to true,
+            FIELD_DYNAMIC_BREAKS to true,
+            FIELD_SILENCE_NOTIFS to true,
+            FIELD_PRIORITY_ALERTS to true,
+            FIELD_UPDATED_AT to serverTimestampProvider(),
+        )
+    }
 
     override suspend fun saveUserProfile(
         userId: String,
@@ -63,7 +101,7 @@ class FirestoreProfileDataSource(
                     FIELD_EMAIL to currentUserEmail,
                     FIELD_ROLE to trimmedRole,
                     FIELD_AVATAR_URI to avatarUri,
-                    FIELD_UPDATED_AT to FieldValue.serverTimestamp(),
+                    FIELD_UPDATED_AT to serverTimestampProvider(),
                 )
                 firestore.collection(COLLECTION_USERS)
                     .document(targetUid)
@@ -96,7 +134,7 @@ class FirestoreProfileDataSource(
                     FIELD_FOCUS_SOUND to prefs.focusStartSound,
                     FIELD_SOUND_TONE to prefs.soundTone,
                     FIELD_DEADLINE_ENABLED to prefs.deadlineRemindersEnabled,
-                    FIELD_UPDATED_AT to FieldValue.serverTimestamp(),
+                    FIELD_UPDATED_AT to serverTimestampProvider(),
                 )
                 firestore.collection(COLLECTION_USERS)
                     .document(targetUid)
@@ -120,7 +158,7 @@ class FirestoreProfileDataSource(
                     FIELD_DYNAMIC_BREAKS to dynamicBreaks,
                     FIELD_SILENCE_NOTIFS to silenceNotifications,
                     FIELD_PRIORITY_ALERTS to priorityAlerts,
-                    FIELD_UPDATED_AT to FieldValue.serverTimestamp(),
+                    FIELD_UPDATED_AT to serverTimestampProvider(),
                 )
                 firestore.collection(COLLECTION_USERS)
                     .document(targetUid)
@@ -149,7 +187,7 @@ class FirestoreProfileDataSource(
                     FIELD_DYNAMIC_BREAKS to true,
                     FIELD_SILENCE_NOTIFS to true,
                     FIELD_PRIORITY_ALERTS to true,
-                    FIELD_UPDATED_AT to FieldValue.serverTimestamp(),
+                    FIELD_UPDATED_AT to serverTimestampProvider(),
                 )
                 firestore.collection(COLLECTION_USERS)
                     .document(targetUid)
@@ -193,23 +231,80 @@ class FirestoreProfileDataSource(
             .get()
             .await()
 
-        if (snapshot.exists()) {
-            val remoteName = snapshot.getString(FIELD_NAME).orEmpty()
+        val auth = authProvider()
+        val authUser = auth?.currentUser
+        val currentUserEmail = authUser?.email.orEmpty()
+        val authDisplayName = authUser?.displayName.orEmpty().trim()
+        val baseName = authDisplayName.ifBlank {
+            ProfileLocalStore.formatNameFromEmail(currentUserEmail).ifBlank { DEFAULT_NAME }
+        }
+        val firstName = baseName.substringBefore(' ')
+        val lastName = baseName.substringAfter(' ', "").trim()
+
+        val exists = snapshot.exists()
+        val remoteName = if (exists) snapshot.getString(FIELD_NAME) else null
+        val remoteEmail = if (exists) snapshot.getString(FIELD_EMAIL) else null
+        val remoteRole = if (exists) snapshot.getString(FIELD_ROLE) else null
+
+        val hasBaseFields = exists &&
+            !remoteName.isNullOrBlank() &&
+            !remoteEmail.isNullOrBlank() &&
+            !remoteRole.isNullOrBlank()
+
+        if (!exists || !hasBaseFields) {
+            val initialData = mutableMapOf<String, Any?>(
+                FIELD_NAME to (remoteName?.takeIf { it.isNotBlank() } ?: firstName),
+                FIELD_LAST_NAME to (if (exists) snapshot.getString(FIELD_LAST_NAME).orEmpty() else lastName),
+                FIELD_EMAIL to (remoteEmail?.takeIf { it.isNotBlank() } ?: currentUserEmail),
+                FIELD_ROLE to (remoteRole?.takeIf { it.isNotBlank() } ?: DEFAULT_ROLE),
+                FIELD_AVATAR_URI to (if (exists) snapshot.getString(FIELD_AVATAR_URI) else null),
+                FIELD_DEADLINE_MINUTES to (if (exists && snapshot.contains(FIELD_DEADLINE_MINUTES)) snapshot.getLong(FIELD_DEADLINE_MINUTES)?.toInt() else NotificationPrefs.DEFAULT_REMINDER_MINUTES),
+                FIELD_FOCUS_SOUND to (if (exists && snapshot.contains(FIELD_FOCUS_SOUND)) snapshot.getBoolean(FIELD_FOCUS_SOUND) else true),
+                FIELD_SOUND_TONE to (if (exists && snapshot.contains(FIELD_SOUND_TONE)) snapshot.getString(FIELD_SOUND_TONE) else NotificationPrefs.DEFAULT_SOUND_TONE),
+                FIELD_DEADLINE_ENABLED to (if (exists && snapshot.contains(FIELD_DEADLINE_ENABLED)) snapshot.getBoolean(FIELD_DEADLINE_ENABLED) else true),
+                FIELD_DYNAMIC_BREAKS to (if (exists && snapshot.contains(FIELD_DYNAMIC_BREAKS)) snapshot.getBoolean(FIELD_DYNAMIC_BREAKS) else true),
+                FIELD_SILENCE_NOTIFS to (if (exists && snapshot.contains(FIELD_SILENCE_NOTIFS)) snapshot.getBoolean(FIELD_SILENCE_NOTIFS) else true),
+                FIELD_PRIORITY_ALERTS to (if (exists && snapshot.contains(FIELD_PRIORITY_ALERTS)) snapshot.getBoolean(FIELD_PRIORITY_ALERTS) else true),
+                FIELD_UPDATED_AT to serverTimestampProvider(),
+            )
+            firestore.collection(COLLECTION_USERS)
+                .document(targetUid)
+                .set(initialData, SetOptions.merge())
+                .await()
+        }
+
+        if (exists) {
+            val finalName = remoteName?.takeIf { it.isNotBlank() } ?: firstName
             val remoteLastName = snapshot.getString(FIELD_LAST_NAME).orEmpty()
-            val fullName = if (remoteLastName.isNotBlank()) {
-                "$remoteName $remoteLastName".trim()
+            val finalLastName = remoteLastName.ifBlank { if (remoteName.isNullOrBlank()) lastName else "" }
+            val fullName = if (finalLastName.isNotBlank()) {
+                "$finalName $finalLastName".trim()
             } else {
-                remoteName
+                finalName
             }
-            val role = snapshot.getString(FIELD_ROLE)
+            val role = remoteRole?.takeIf { it.isNotBlank() } ?: DEFAULT_ROLE
             val avatarUri = snapshot.getString(FIELD_AVATAR_URI)
 
-            if (fullName.isNotBlank() || !role.isNullOrBlank()) {
+            if (fullName.isNotBlank() || role.isNotBlank()) {
                 localStore.saveProfile(
                     name = fullName.ifBlank { localStore.userName.value },
-                    role = role ?: localStore.userRole.value,
+                    role = role,
                     avatarUri = avatarUri ?: localStore.avatarUri.value,
                 )
+            }
+
+            // Si en Firestore aún no estaba guardado el campo email, hacemos merge para completarlo
+            if (remoteEmail.isNullOrBlank() && currentUserEmail.isNotBlank()) {
+                firestore.collection(COLLECTION_USERS)
+                    .document(targetUid)
+                    .set(
+                        mapOf(
+                            FIELD_EMAIL to currentUserEmail,
+                            FIELD_UPDATED_AT to serverTimestampProvider(),
+                        ),
+                        SetOptions.merge(),
+                    )
+                    .await()
             }
 
             val dynamicBreaks = snapshot.getBoolean(FIELD_DYNAMIC_BREAKS)
@@ -239,6 +334,13 @@ class FirestoreProfileDataSource(
                     soundTone = soundTone ?: currentPrefs.soundTone,
                 ),
             )
+        } else {
+            // El documento no existía y fue aprovisionado con los valores por defecto
+            localStore.saveProfile(
+                name = baseName,
+                role = DEFAULT_ROLE,
+                avatarUri = null,
+            )
         }
     }
 
@@ -252,23 +354,23 @@ class FirestoreProfileDataSource(
     }
 
     companion object {
-        private const val COLLECTION_USERS = "users"
+        const val COLLECTION_USERS = "users"
 
-        private const val FIELD_NAME = "name"
-        private const val FIELD_LAST_NAME = "lastName"
-        private const val FIELD_EMAIL = "email"
-        private const val FIELD_ROLE = "role"
-        private const val FIELD_AVATAR_URI = "avatarUri"
-        private const val FIELD_DEADLINE_MINUTES = "deadlineReminderMinutes"
-        private const val FIELD_FOCUS_SOUND = "focusStartSound"
-        private const val FIELD_SOUND_TONE = "soundTone"
-        private const val FIELD_DEADLINE_ENABLED = "deadlineRemindersEnabled"
-        private const val FIELD_DYNAMIC_BREAKS = "dynamicBreaksEnabled"
-        private const val FIELD_SILENCE_NOTIFS = "silenceInternalNotificationsEnabled"
-        private const val FIELD_PRIORITY_ALERTS = "priorityAlertsEnabled"
-        private const val FIELD_UPDATED_AT = "updatedAt"
+        const val FIELD_NAME = "name"
+        const val FIELD_LAST_NAME = "lastName"
+        const val FIELD_EMAIL = "email"
+        const val FIELD_ROLE = "role"
+        const val FIELD_AVATAR_URI = "avatarUri"
+        const val FIELD_DEADLINE_MINUTES = "deadlineReminderMinutes"
+        const val FIELD_FOCUS_SOUND = "focusStartSound"
+        const val FIELD_SOUND_TONE = "soundTone"
+        const val FIELD_DEADLINE_ENABLED = "deadlineRemindersEnabled"
+        const val FIELD_DYNAMIC_BREAKS = "dynamicBreaksEnabled"
+        const val FIELD_SILENCE_NOTIFS = "silenceInternalNotificationsEnabled"
+        const val FIELD_PRIORITY_ALERTS = "priorityAlertsEnabled"
+        const val FIELD_UPDATED_AT = "updatedAt"
 
-        private const val DEFAULT_NAME = "Usuario"
-        private const val DEFAULT_ROLE = "Estudiante y trabajador"
+        const val DEFAULT_NAME = "Usuario"
+        const val DEFAULT_ROLE = "Estudiante y trabajador"
     }
 }
